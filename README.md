@@ -186,3 +186,23 @@ python scripts/evaluate.py \
 - `outputs/eval_valid.json`
 - `outputs/eval_test.json`
 - `outputs/predictions_test.csv`
+
+
+## Backup
+### sanity check | graph direction
+```bash
+python scripts/sanity_check_graph_direction.py --config configs/c1000/base_v2.yaml --num-samples 20
+```
+Should output `ALL PASSED.` If not -> wrong edge_index direction or kNN dst!=center
+
+### sanity check | 32-sample overfit
+```bash
+python scripts/sanity_check_overfit_32.py --config configs/c1000/base_v2.yaml --num-samples 32 --steps 1500 --batch-size 4 --lr 3e-4
+```
+Should output `PASSED: model can overfit 32 samples`. 
+
+### sanity check | node-label
+```bash
+python scripts/sanity_check_labels.py --config configs/c1000/base_v2.yaml --num-samples 100
+```
+Should output `PASSED: labels/features have consistent node lengths.`

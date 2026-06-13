@@ -115,7 +115,7 @@ def parse_args() -> argparse.Namespace:
 	parser.add_argument('--pdb_format', type=str, default='mmcif', help='pdb mmcif')
 	parser.add_argument("--csv", required=True)
 	parser.add_argument("--out", required=True)
-	parser.add_argument("--chunksize", type=int, default=1000)
+	parser.add_argument("--chunksize", type=int, default=5000)
 	parser.add_argument("--num_workers", type=int, default=-1, help="Number of worker processes for parallel processing (default: number of CPU cores - 2)")
 	return parser.parse_args()
 
@@ -144,6 +144,7 @@ def main() -> None:
 	metadata: list[dict[str, Any]] = []
 
 	total_rows = 0
+	chunk_idx = 1
 	max_workers = max(1, len(os.sched_getaffinity(0)) - 2) if args.num_workers < 0 else args.num_workers
 	if max_workers == 1:
 		for chunk in pd.read_csv(args.csv, chunksize=args.chunksize):
@@ -162,6 +163,8 @@ def main() -> None:
 	else:
 		with ProcessPoolExecutor(max_workers=max_workers) as executor:
 			for chunk in pd.read_csv(args.csv, chunksize=args.chunksize):
+				print(f"Processing chunk {chunk_idx} / {745572 // args.chunksize + 1}")
+				chunk_idx += 1
 				total_rows += len(chunk)
 				rows = chunk.to_dict(orient="records")
 				futures = [executor.submit(process_row_worker, row, args.pdb_format, args.pdb_root, args.pdb_version, sample_dir) for row in rows]
