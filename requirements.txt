@@ -1,0 +1,11 @@
+biopython>=1.84
+biopandas>=0.5.1
+func-timeout>=4.3.5
+numpy>=1.24
+pandas>=2.0
+PyYAML>=6.0
+scikit-learn>=1.3
+torch>=2.1
+torch-geometric>=2.5
+transformers>=4.41
+tqdm>=4.66
