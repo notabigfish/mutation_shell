@@ -94,29 +94,12 @@ def build_sample(row: dict[str, Any], pdb_format: str, pdb_root: str, pdb_versio
 	}
 	return sample, None
 
-def process_row_worker(row: dict, pdb_format: str, pdb_root: Path, pdb_version: str, sample_dir: Path, resume: bool=False) -> dict:
-	sample_id = str(row["sample_id"])
-	sample_path = sample_dir / f"{sample_id}.pt"
-	if resume and sample_path.exists():
-		try:
-			sample = torch.load(sample_path, map_location="cpu", weights_only=False)
-			meta = {
-				"sample_id": sample["sample_id"],
-				"cluster_id_30": sample["cluster_id_30"],
-				"release_date": sample["release_date"],
-				"length": int(sample["coords_wt"].shape[0]),
-			}
-			return {"status": "success", "sample_id": sample["sample_id"], "metadata": meta}
-		except Exception:
-			pass
-
+def process_row_worker(row: dict, pdb_format: str, pdb_root: Path, pdb_version: str, sample_dir: Path) -> dict:
 	sample, reason = build_sample(row, pdb_format, pdb_root, pdb_version)
 	if isinstance(sample, str):
 		return {"status": "rejected", "sample_id": sample, "reason": f'{sample} rejected: {reason}'}
-	temp_path = sample_path.with_suffix(".pt.tmp")
-	torch.save(sample, temp_path)
-	temp_path.rename(sample_path)
-
+	sample_path = sample_dir / f"{sample['sample_id']}.pt"
+	torch.save(sample, sample_path)
 	meta = {
 		"sample_id": sample["sample_id"],
 		"cluster_id_30": sample["cluster_id_30"],
@@ -134,7 +117,6 @@ def parse_args() -> argparse.Namespace:
 	parser.add_argument("--out", required=True)
 	parser.add_argument("--chunksize", type=int, default=5000)
 	parser.add_argument("--num_workers", type=int, default=-1, help="Number of worker processes for parallel processing (default: number of CPU cores - 2)")
-	parser.add_argument("--resume", action="store_true", help="Resume from existing samples if available")
 	return parser.parse_args()
 
 
@@ -170,7 +152,7 @@ def main() -> None:
 			rows = chunk.to_dict(orient="records")
 			
 			for row in tqdm(rows, desc="prepare_data (debug)", leave=False):
-				result = process_row_worker(row, args.pdb_format, args.pdb_root, args.pdb_version, sample_dir, args.resume)
+				result = process_row_worker(row, args.pdb_format, args.pdb_root, args.pdb_version, sample_dir)
 				
 				if result["status"] == "rejected":
 					rejections[result["reason"]].append(result["sample_id"])
@@ -185,7 +167,7 @@ def main() -> None:
 				chunk_idx += 1
 				total_rows += len(chunk)
 				rows = chunk.to_dict(orient="records")
-				futures = [executor.submit(process_row_worker, row, args.pdb_format, args.pdb_root, args.pdb_version, sample_dir, args.resume) for row in rows]
+				futures = [executor.submit(process_row_worker, row, args.pdb_format, args.pdb_root, args.pdb_version, sample_dir) for row in rows]
 				for future in tqdm(as_completed(futures), total=len(futures), desc="prepare_data", leave=False):
 					result = future.result()
 					if result['status'] == "rejected":
