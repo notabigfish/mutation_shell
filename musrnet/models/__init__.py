@@ -4,11 +4,13 @@ from typing import Any
 
 from musrnet.models.base_v1 import MuSRNet as BaseV1MuSRNet
 from musrnet.models.base_v2 import MuSRNet as BaseV2MuSRNet
+from musrnet.models.base_v4 import MuSRNet as BaseV4MuSRNet
 
 
 MODEL_REGISTRY = {
     "base_v1": BaseV1MuSRNet,
     "base_v2": BaseV2MuSRNet,
+    "base_v4": BaseV4MuSRNet,
 }
 
 

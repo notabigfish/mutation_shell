@@ -140,10 +140,17 @@ def esm_chain_key(pdb_id: str, chain_id: str) -> str:
 
 
 class MuSRNetDataset(Dataset):
-    def __init__(self, manifest: dict[str, Any], sample_ids: list[str], knn_k: int) -> None:
+    def __init__(
+        self,
+        manifest: dict[str, Any],
+        sample_ids: list[str],
+        knn_k: int,
+        edge_feature_version: str = "v1",
+    ) -> None:
         self.manifest = manifest
         self.sample_ids = sample_ids
         self.knn_k = knn_k
+        self.edge_feature_version = edge_feature_version
         sample_dir = Path(manifest["samples_dir"])
         self.sample_path_by_id = {sample_id: sample_dir / f"{sample_id}.pt" for sample_id in manifest["sample_ids"]}
 
@@ -179,4 +186,4 @@ class MuSRNetDataset(Dataset):
             'esm_delta': mut_embedding - wt_embedding,
         }
 
-        return build_graph(sample, esm_data, self.knn_k)
+        return build_graph(sample, esm_data, self.knn_k, edge_feature_version=self.edge_feature_version)

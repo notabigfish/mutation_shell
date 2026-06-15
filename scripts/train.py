@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import inspect
 import os
 import sys
 from pathlib import Path
@@ -47,6 +48,42 @@ def parse_args() -> argparse.Namespace:
 
 def pyg_collate_fn(features: list[Batch]) -> Batch:
     return Batch.from_data_list(features)
+
+
+def forward_model(model, batch):
+    batch_inputs = {
+        "x_basic": batch.x_basic,
+        "esm_wt": batch.esm_wt,
+        "esm_delta": batch.esm_delta,
+        "edge_index": batch.edge_index,
+        "edge_attr": batch.edge_attr,
+        "shell_id": batch.shell_id,
+        "batch": batch.batch,
+    }
+    for optional_name in ["radii", "is_mutation_site", "mut_pos"]:
+        if hasattr(batch, optional_name):
+            batch_inputs[optional_name] = getattr(batch, optional_name)
+    supported = inspect.signature(model.forward).parameters
+    return model(**{key: value for key, value in batch_inputs.items() if key in supported})
+
+
+def derive_graph_predictions(outputs, batch, graph_idx: int, node_slice: slice, eval_cfg: dict[str, Any]) -> tuple[float, int]:
+    if "radius" in outputs:
+        pred_radius = float(outputs["radius"][graph_idx].detach().cpu().item())
+    else:
+        pred_disp_graph = outputs["disp"][node_slice].detach().cpu()
+        perturbed_prob = torch.sigmoid(outputs["perturbed_logit"][node_slice].detach().cpu())
+        score = perturbed_prob * pred_disp_graph
+        pred_mask = score > float(eval_cfg.get("response_threshold", 0.5))
+        radii = batch.radii[node_slice].detach().cpu()
+        pred_radius = float(radii[pred_mask].max().item()) if pred_mask.any() else 0.0
+    pred_class = derive_class_from_pred(
+        pred_disp_graph=outputs["disp"][node_slice].detach().cpu(),
+        pred_radius=torch.tensor(pred_radius),
+        displacement_threshold=float(eval_cfg.get("displacement_threshold", 1.0)),
+        radius_threshold=float(eval_cfg.get("radius_threshold", 8.0)),
+    )
+    return pred_radius, pred_class
 
 def make_pyg_loader(dataset, *, batch_size=None, batch_sampler=None, shuffle=False, num_workers=0, pin_memory=False, prefetch_factor=None, persistent_workers=False):
     kwargs = dict(
@@ -196,10 +233,11 @@ def cuda_mem(prefix=""):
 
 
 class MuSRNetTrainer(Trainer):
-    def __init__(self, *args, loss_cfg, batch_cfg, **kwargs):
+    def __init__(self, *args, loss_cfg, batch_cfg, eval_cfg, **kwargs):
         super().__init__(*args, **kwargs)
         self.loss_cfg = loss_cfg
         self.batch_cfg = batch_cfg
+        self.eval_cfg = eval_cfg
 
     def _make_length_batch_sampler(self, dataset, train: bool):
         max_nodes = self.batch_cfg.get("max_nodes_per_batch")
@@ -251,32 +289,24 @@ class MuSRNetTrainer(Trainer):
         # cuda_mem("before_forward")
         # # END DEBUG
 
-        outputs = model(
-            x_basic=inputs.x_basic,
-            esm_wt=inputs.esm_wt,
-            esm_delta=inputs.esm_delta,
-            edge_index=inputs.edge_index,
-            edge_attr=inputs.edge_attr,
-            shell_id=inputs.shell_id,
-            batch=inputs.batch,
-        )
+        outputs = forward_model(model, inputs)
 
         # cuda_mem("after_forward")  # DEBUG
         
         current_epoch = float(self.state.epoch or 0.0)
         loss_dict  = compute_losses(outputs, inputs, current_epoch=current_epoch, **self.loss_cfg)
         
-        self.log(
-            {
-                "train_disp_loss": loss_dict["disp_loss"].detach().item(),
-                "train_pert_loss": loss_dict["pert_loss"].detach().item(),
-                "train_radius_loss": loss_dict["radius_loss"].detach().item(),
-                # "train_class_loss": loss_dict["class_loss"].detach().item(),
-                "train_w_perturbed_eff": loss_dict['w_perturbed_eff'].detach().item(),
-                "train_w_radius_eff": loss_dict["w_radius_eff"].detach().item(),
-                # "train_w_class_eff": loss_dict["w_class_eff"].detach().item(),                
-            }
-        )
+        log_dict = {
+            "train_disp_loss": loss_dict["disp_loss"].detach().item(),
+            "train_pert_loss": loss_dict["pert_loss"].detach().item(),
+            "train_w_perturbed_eff": loss_dict['w_perturbed_eff'].detach().item(),
+            "train_w_radius_eff": loss_dict["w_radius_eff"].detach().item(),
+        }
+        if "radius_loss" in loss_dict:
+            log_dict["train_radius_loss"] = loss_dict["radius_loss"].detach().item()
+        if "class_loss" in loss_dict:
+            log_dict["train_class_loss"] = loss_dict["class_loss"].detach().item()
+        self.log(log_dict)
         if return_outputs:
             return loss_dict["loss"], outputs
         return loss_dict["loss"]
@@ -382,6 +412,7 @@ class MuSRNetTrainer(Trainer):
             int(self.batch_cfg.get("eval_num_workers", 0)),
             self.loss_cfg,
             self.batch_cfg,
+            self.eval_cfg,
             current_epoch=float(self.state.epoch or 0.0),
         )
         metrics = {
@@ -393,8 +424,9 @@ class MuSRNetTrainer(Trainer):
         return metrics
 
 @torch.inference_mode()
-def evaluate_dataset(model, dataset, batch_size, num_workers, loss_cfg, batch_cfg=None, current_epoch=0.0):
+def evaluate_dataset(model, dataset, batch_size, num_workers, loss_cfg, batch_cfg=None, eval_cfg=None, current_epoch=0.0):
     batch_cfg = batch_cfg or {}
+    eval_cfg = eval_cfg or {}
     max_nodes = batch_cfg.get("eval_max_nodes_per_batch", batch_cfg.get("max_nodes_per_batch"))
 
     if max_nodes is not None:
@@ -438,20 +470,12 @@ def evaluate_dataset(model, dataset, batch_size, num_workers, loss_cfg, batch_cf
         "pred_class": [],
         "cluster_id_30": [],
     }
-    loss_totals = {"loss": 0.0, "disp_loss": 0.0, "pert_loss": 0.0, "radius_loss": 0.0}  # , "class_loss": 0.0}
+    loss_totals = {"loss": 0.0, "disp_loss": 0.0, "pert_loss": 0.0}
     batches = 0
     device = next(model.parameters()).device
     for batch in loader:
         batch = batch.to(device)
-        outputs = model(
-            x_basic=batch.x_basic,
-            esm_wt=batch.esm_wt,
-            esm_delta=batch.esm_delta,
-            edge_index=batch.edge_index,
-            edge_attr=batch.edge_attr,
-            shell_id=batch.shell_id,
-            batch=batch.batch,
-        )
+        outputs = forward_model(model, batch)
         loss_dict = compute_losses(
             outputs,
             batch,
@@ -459,25 +483,23 @@ def evaluate_dataset(model, dataset, batch_size, num_workers, loss_cfg, batch_cf
             **loss_cfg,
         )
 
-        for key in loss_totals:
-            loss_totals[key] += float(loss_dict[key].detach().item())
+        for key, value in loss_dict.items():
+            if key.endswith("_eff"):
+                continue
+            loss_totals.setdefault(key, 0.0)
+            loss_totals[key] += float(value.detach().item())
 
         batches += 1
 
         probs = torch.sigmoid(outputs["perturbed_logit"]).detach().cpu()
-        # pred_class = outputs["class_logit"].argmax(dim=-1).detach().cpu()
         ptr = batch.ptr.detach().cpu().tolist()
         cluster_ids = list(batch.cluster_id_30)
         disp_cpu = outputs["disp"].detach().cpu()
-        radius_cpu = outputs["radius"].detach().cpu()
 
         for graph_idx, (start, end) in enumerate(zip(ptr[:-1], ptr[1:])):
             node_slice = slice(start, end)
             nodes = end - start
-            pred_class = derive_class_from_pred(
-                pred_disp_graph=disp_cpu[node_slice],
-                pred_radius=radius_cpu[graph_idx],
-            )
+            pred_radius, pred_class = derive_graph_predictions(outputs, batch, graph_idx, node_slice, eval_cfg)
             all_records["true_disp"].extend(batch.y_disp[node_slice].detach().cpu().tolist())
             all_records["pred_disp"].extend(disp_cpu[node_slice].tolist())
 
@@ -487,7 +509,7 @@ def evaluate_dataset(model, dataset, batch_size, num_workers, loss_cfg, batch_cf
             all_records["pred_perturbed_prob"].extend(probs[node_slice].tolist())
 
             all_records["true_radius"].extend([float(batch.y_radius[graph_idx].detach().cpu().item())] * nodes)
-            all_records["pred_radius"].extend([float(radius_cpu[graph_idx].item())] * nodes)
+            all_records["pred_radius"].extend([pred_radius] * nodes)
 
             all_records["true_class"].extend([int(batch.y_class[graph_idx].detach().cpu().item())] * nodes)
             all_records["pred_class"].extend([pred_class] * nodes)
@@ -562,8 +584,9 @@ def main() -> None:
     cluster_pkl_path = PROJECT_ROOT / "data" / "SingleMutPairs2024_cluster30.pkl"
     splits = create_or_load_splits(samples_manifest, config["paths"]["splits"], cluster_pkl_path, config["seed"])
 
-    train_dataset = MuSRNetDataset(samples_manifest, splits["train"], config["data"]["knn_k"])
-    valid_dataset = MuSRNetDataset(samples_manifest, splits["valid"], config["data"]["knn_k"])
+    edge_feature_version = config["data"].get("edge_feature_version", "v1")
+    train_dataset = MuSRNetDataset(samples_manifest, splits["train"], config["data"]["knn_k"], edge_feature_version=edge_feature_version)
+    valid_dataset = MuSRNetDataset(samples_manifest, splits["valid"], config["data"]["knn_k"], edge_feature_version=edge_feature_version)
 
     model_name = args.model_name or config["model_name"]
     model = build_model(model_name, config["model"])
@@ -627,6 +650,7 @@ def main() -> None:
         data_collator=pyg_collate_fn,
         loss_cfg=config["loss"],
         batch_cfg=config["data"],
+        eval_cfg=config.get("eval", {}),
         callbacks=[
             EarlyStoppingCallback(early_stopping_patience=config["train"]["patience"])
         ],
