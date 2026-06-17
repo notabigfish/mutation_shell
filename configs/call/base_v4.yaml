@@ -1,9 +1,9 @@
 seed: 42
 
 paths:
-  samples: data/processed/samples_subset_c1000.pt
-  splits: data/processed/splits_c1000.json
-  output_dir: outputs/c1000/base_v4
+  samples: data/processed/samples.pt
+  splits: data/processed/splits.json
+  output_dir: outputs/call/base_v4
 
 data:
   knn_k: 32
@@ -43,7 +43,7 @@ train:
   save_total_limit: 2
 
 wandb:
-  project_name: musrnet_c1000
+  project_name: musrnet_call
   run_name: base_v4
   run_id: null
   resume_same_run: false

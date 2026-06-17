@@ -7,8 +7,10 @@ import json
 import sys
 from pathlib import Path
 
+from tqdm import tqdm
 import torch
 from torch_geometric.loader import DataLoader
+from safetensors.torch import load_file
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -80,7 +82,7 @@ def evaluate_split(model, loader, device, eval_cfg: dict):
         "cluster_id_30": [],
     }
     prediction_rows: list[dict] = []
-    for batch in loader:
+    for batch in tqdm(loader, desc="Evaluating"):
         batch = batch.to(device)
         outputs = forward_model(model, batch)
         probs = torch.sigmoid(outputs["perturbed_logit"]).detach().cpu()
@@ -122,14 +124,23 @@ def evaluate_split(model, loader, device, eval_cfg: dict):
             records["cluster_id_30"].extend([cluster_ids[graph_idx]] * nodes)
     return compute_metrics(records), prediction_rows
 
+def load_checkpoint_state_dict(checkpoint_path: str | Path) -> dict[str, torch.Tensor]:
+    checkpoint_path = Path(checkpoint_path)
+    if checkpoint_path.suffix == ".safetensors":
+        return load_file(str(checkpoint_path), device="cpu")
+
+    checkpoint = torch.load(checkpoint_path, map_location="cpu")
+    if "model_state" in checkpoint:
+        return checkpoint["model_state"]
+    return checkpoint
 
 def main() -> None:
     args = parse_args()
     config = load_yaml(args.config)
-    checkpoint = torch.load(args.checkpoint, map_location="cpu")
     model_name = config["model_name"]
     model = build_model(model_name, config["model"])
-    model.load_state_dict(checkpoint["model_state"])
+    sd = load_checkpoint_state_dict(args.checkpoint)
+    model.load_state_dict(sd)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
@@ -141,7 +152,8 @@ def main() -> None:
 
     all_predictions: list[dict] = []
     edge_feature_version = config["data"].get("edge_feature_version", "v1")
-    for split in ["train", "valid", "test"]:
+    # for split in ["train", "valid", "test"]:
+    for split in ["test"]:
         dataset = MuSRNetDataset(manifest, splits[split], config["data"]["knn_k"], edge_feature_version=edge_feature_version)
         loader = DataLoader(
             dataset,

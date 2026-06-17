@@ -87,8 +87,12 @@ def compute_losses(
         target = torch.log1p(batch.y_disp)
         pred = torch.log1p(outputs["disp"])
         err2 = (pred - target) ** 2
-        logvar = outputs["disp_logvar"]
-        per_residue = 0.5 * torch.exp(-logvar) * err2 + 0.5 * logvar
+        raw = outputs["disp_logvar"]
+        var_min = 1e-4
+        var_max = 1.0
+        var = (F.softplus(raw) + var_min).clamp(max=var_max)
+
+        per_residue = 0.5  * err2 / var + 0.5 * torch.log(var)
         disp_loss = shell_balanced_reduce(per_residue, batch.shell_id, batch.batch)
     else:
         disp_loss = shell_balanced_disp_loss(outputs["disp"], batch.y_disp, batch.shell_id, batch.batch, delta)

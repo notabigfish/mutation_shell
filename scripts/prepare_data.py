@@ -135,6 +135,7 @@ def parse_args() -> argparse.Namespace:
 	parser.add_argument("--chunksize", type=int, default=5000)
 	parser.add_argument("--num_workers", type=int, default=-1, help="Number of worker processes for parallel processing (default: number of CPU cores - 2)")
 	parser.add_argument("--resume", action="store_true", help="Resume from existing samples if available")
+	parser.add_argument("--total_samples", type=int, default=0)
 	return parser.parse_args()
 
 
@@ -181,7 +182,7 @@ def main() -> None:
 	else:
 		with ProcessPoolExecutor(max_workers=max_workers) as executor:
 			for chunk in pd.read_csv(args.csv, chunksize=args.chunksize):
-				print(f"Processing chunk {chunk_idx} / {745572 // args.chunksize + 1}")
+				print(f"Processing chunk {chunk_idx} / {args.total_samples // args.chunksize + 1}")
 				chunk_idx += 1
 				total_rows += len(chunk)
 				rows = chunk.to_dict(orient="records")
