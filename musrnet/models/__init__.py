@@ -6,6 +6,13 @@ from musrnet.models.base_v1 import MuSRNet as BaseV1MuSRNet
 from musrnet.models.base_v2 import MuSRNet as BaseV2MuSRNet
 from musrnet.models.base_v4 import MuSRNet as BaseV4MuSRNet
 from musrnet.models.base_v5 import MuSRNet as BaseV5MuSRNet
+from musrnet.models.coordinate_residual import CoordinateResidualBaseline
+from musrnet.models.esm_mlp import ESMMLPBaseline
+from musrnet.models.geometry_gnn import GeometryGNNBaseline
+from musrnet.models.global_mean import GlobalMeanBaseline
+from musrnet.models.mutation_type_shell_mean import MutationTypeShellMeanBaseline
+from musrnet.models.shell_mean import ShellMeanBaseline
+from musrnet.models.zero_response import ZeroResponseBaseline
 
 
 MODEL_REGISTRY = {
@@ -13,6 +20,13 @@ MODEL_REGISTRY = {
     "base_v2": BaseV2MuSRNet,
     "base_v4": BaseV4MuSRNet,
     "base_v5": BaseV5MuSRNet,
+    "zero_response": ZeroResponseBaseline,
+    "global_mean": GlobalMeanBaseline,
+    "shell_mean": ShellMeanBaseline,
+    "mutation_type_shell_mean": MutationTypeShellMeanBaseline,
+    "esm_mlp": ESMMLPBaseline,
+    "geometry_gnn": GeometryGNNBaseline,
+    "coordinate_residual": CoordinateResidualBaseline,
 }
 
 

@@ -1,0 +1,18 @@
+seed: 42
+
+paths:
+  samples: data/processed/samples_subset_c1000.pt
+  splits: data/processed/splits_c1000.json
+  output_dir: outputs/c1000/mutation_type_shell_mean
+
+model_name: mutation_type_shell_mean
+model: {}
+
+baseline:
+  type: mutation_type_shell_mean
+  min_count: 20
+
+eval:
+  displacement_threshold: 1.0
+  response_threshold: 0.5
+  radius_threshold: 8.0

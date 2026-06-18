@@ -10,9 +10,9 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-from musrnet.constants import AA_TO_INDEX, AMINO_ACIDS, NUM_RBF, RBF_CENTERS, RBF_SIGMA
-from musrnet.graph import build_graph
+from musrnet.constants import AA_TO_INDEX, AMINO_ACIDS, RBF_CENTERS, RBF_SIGMA
 from musrnet.esm_embed import load_chain_esm, open_esm_lmdb
+from musrnet.graph import build_graph
 
 
 def load_samples_manifest(samples_path: str | Path) -> dict[str, Any]:
@@ -45,17 +45,23 @@ def load_samples_manifest(samples_path: str | Path) -> dict[str, Any]:
     if not isinstance(obj, dict):
         raise ValueError("Unsupported samples file format")
     if "sample_files" in obj and "sample_ids" not in obj:
-        sample_ids = [Path(path).stem for path in obj["sample_files"]]
-        obj["sample_ids"] = sample_ids
+        obj["sample_ids"] = [Path(path).stem for path in obj["sample_files"]]
     if "sample_ids" not in obj or "samples_dir" not in obj:
         raise ValueError("Unsupported samples file format")
     return obj
 
 
+def get_sample_path(manifest: dict[str, Any], sample_id: str) -> Path:
+    return Path(manifest["samples_dir"]) / f"{sample_id}.pt"
+
+
+def load_sample_from_manifest(manifest: dict[str, Any], sample_id: str) -> dict[str, Any]:
+    return torch.load(get_sample_path(manifest, sample_id), map_location="cpu")
+
+
 def iter_sample_paths(manifest: dict[str, Any]) -> Iterable[Path]:
-    sample_dir = Path(manifest["samples_dir"])
     for sample_id in manifest["sample_ids"]:
-        yield sample_dir / f"{sample_id}.pt"
+        yield get_sample_path(manifest, sample_id)
 
 
 def one_hot_aa(aa: str) -> np.ndarray:
@@ -101,9 +107,10 @@ def create_or_load_splits(
     manifest_sample_ids = set(samples_manifest["sample_ids"])
     if splits_path.exists():
         with splits_path.open("r", encoding="utf-8") as handle:
-            return json.load(handle)
+            splits = json.load(handle)
         return {
-            split: [sample_id for sample_id in sample_ids if sample_id in manifest_sample_ids] for split, sample_ids in splits.items()
+            split: [sample_id for sample_id in sample_ids if sample_id in manifest_sample_ids]
+            for split, sample_ids in splits.items()
         }
 
     with open(cluster_pkl_path, "rb") as handle:
@@ -135,6 +142,7 @@ def create_or_load_splits(
         json.dump(splits, handle, indent=2)
     return splits
 
+
 def esm_chain_key(pdb_id: str, chain_id: str) -> str:
     return f"{str(pdb_id).lower()}_{str(chain_id)}"
 
@@ -151,8 +159,7 @@ class MuSRNetDataset(Dataset):
         self.sample_ids = sample_ids
         self.knn_k = knn_k
         self.edge_feature_version = edge_feature_version
-        sample_dir = Path(manifest["samples_dir"])
-        self.sample_path_by_id = {sample_id: sample_dir / f"{sample_id}.pt" for sample_id in manifest["sample_ids"]}
+        self.sample_path_by_id = {sample_id: get_sample_path(manifest, sample_id) for sample_id in manifest["sample_ids"]}
 
         lmdb_path = manifest.get("esm_lmdb_path")
         if lmdb_path is None:
@@ -166,24 +173,21 @@ class MuSRNetDataset(Dataset):
         sample_id = self.sample_ids[index]
         sample = torch.load(self.sample_path_by_id[sample_id], map_location="cpu")
         sample["x_basic"] = build_basic_features(sample)
-        
+
         wt_key = esm_chain_key(sample["wt_pdb_id"], sample["wt_chain_id"])
         mut_key = esm_chain_key(sample["mut_pdb_id"], sample["mut_chain_id"])
-
-        wt_esm_data = load_chain_esm(self.esm_env, wt_key)  # key: pdb_id, chain_id, sequence, embedding
+        wt_esm_data = load_chain_esm(self.esm_env, wt_key)
         mut_esm_data = load_chain_esm(self.esm_env, mut_key)
 
         if wt_esm_data["sequence"] != sample["wt_sequence"]:
             raise ValueError(f"WT ESM sequence mismatch for sample {sample_id}")
         if mut_esm_data["sequence"] != sample["mut_sequence"]:
             raise ValueError(f"Mutant ESM sequence mismatch for sample {sample_id}")
-        
-        wt_embedding = wt_esm_data['embedding']  # seq_len, esm_dim
-        mut_embedding = mut_esm_data['embedding'] # seq_len, esm_dim
 
+        wt_embedding = wt_esm_data["embedding"].float()
+        mut_embedding = mut_esm_data["embedding"].float()
         esm_data = {
-            'esm_wt': wt_embedding,
-            'esm_delta': mut_embedding - wt_embedding,
+            "esm_wt": wt_embedding,
+            "esm_delta": mut_embedding - wt_embedding,
         }
-
         return build_graph(sample, esm_data, self.knn_k, edge_feature_version=self.edge_feature_version)

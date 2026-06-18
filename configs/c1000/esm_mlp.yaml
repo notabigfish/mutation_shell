@@ -1,0 +1,61 @@
+seed: 42
+
+paths:
+  samples: data/processed/samples_subset_c1000.pt
+  splits: data/processed/splits_c1000.json
+  output_dir: outputs/c1000/esm_mlp
+
+data:
+  knn_k: 32
+  batch_size: 256
+  num_workers: 16
+  eval_num_workers: 4
+  prefetch_factor: 1
+  eval_prefetch_factor: 1
+  persistent_workers: true
+  pin_memory: true
+  eval_pin_memory: false
+  max_nodes_per_batch: 22000
+  eval_max_nodes_per_batch: 22000
+  length_bucket_size: 256
+  edge_feature_version: base
+
+model_name: esm_mlp
+
+model:
+  esm_dim: 1280
+  basic_dim: 57
+  hidden_dim: 256
+  esm_proj_dim: 128
+  dropout: 0.1
+
+train:
+  epochs: 100
+  lr: 0.0001
+  weight_decay: 0.00001
+  patience: 15
+  grad_clip: 1.0
+  fp16: true
+  logging_steps: 100
+  save_total_limit: 2
+
+wandb:
+  project_name: musrnet_c1000
+  run_name: esm_mlp
+  run_id: null
+  resume_same_run: false
+
+loss:
+  delta: 1.0
+  w_perturbed: 0.3
+  w_radius: 0.0
+  w_class: 0.0
+  use_log_disp: false
+  use_heteroscedastic_disp: false
+  use_radius_loss: false
+  use_class_loss: false
+
+eval:
+  displacement_threshold: 1.0
+  response_threshold: 0.5
+  radius_threshold: 8.0
