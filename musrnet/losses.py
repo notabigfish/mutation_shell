@@ -73,6 +73,7 @@ def compute_losses(
     batch,
     delta: float = 1.0,
     w_perturbed: float = 0.2,
+    w_background: float = 0.0,
     w_radius: float = 0.2,
     w_class: float = 0.2,
     current_epoch: float = 0.0,
@@ -87,16 +88,13 @@ def compute_losses(
         target = torch.log1p(batch.y_disp)
         pred = torch.log1p(outputs["disp"])
         err2 = (pred - target) ** 2
-        raw = outputs["disp_logvar"]
-        var_min = 1e-4
-        var_max = 1.0
-        var = (F.softplus(raw) + var_min).clamp(max=var_max)
-
-        per_residue = 0.5  * err2 / var + 0.5 * torch.log(var)
+        logvar = outputs["disp_logvar"]
+        per_residue = 0.5 * torch.exp(-logvar) * err2 + 0.5 * logvar
         disp_loss = shell_balanced_reduce(per_residue, batch.shell_id, batch.batch)
     else:
         disp_loss = shell_balanced_disp_loss(outputs["disp"], batch.y_disp, batch.shell_id, batch.batch, delta)
     pert_loss = F.binary_cross_entropy_with_logits(outputs["perturbed_logit"], batch.y_perturbed)
+    background_penalty = outputs["background"].mean() if "background" in outputs else disp_loss.new_tensor(0.0)
     radius_loss = (
         torch.abs(outputs["radius"] - batch.y_radius.view(-1)).mean()
         if "radius" in outputs
@@ -107,7 +105,7 @@ def compute_losses(
     w_radius_eff = _epoch_enabled_weight(w_radius, current_epoch, warmup, start_radius_epoch)
     w_class_eff = _epoch_enabled_weight(w_class, current_epoch, warmup, start_class_epoch)
 
-    total = disp_loss + w_perturbed_eff * pert_loss + w_radius_eff * radius_loss
+    total = disp_loss + w_perturbed_eff * pert_loss + w_background * background_penalty + w_radius_eff * radius_loss
 
     loss_dict = {
         "loss": total,
@@ -117,6 +115,8 @@ def compute_losses(
         "w_radius_eff": torch.tensor(w_radius_eff, device=disp_loss.device),
         "w_class_eff": torch.tensor(w_class_eff, device=disp_loss.device),
     }
+    if "background" in outputs:
+        loss_dict["background_penalty"] = background_penalty
     if "radius" in outputs:
         loss_dict["radius_loss"] = radius_loss
     return loss_dict
