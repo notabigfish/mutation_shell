@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import wilcoxon
 from sklearn.metrics import average_precision_score, f1_score, roc_auc_score
+from tqdm import tqdm
 
 
 def parse_args() -> argparse.Namespace:
@@ -69,7 +70,7 @@ def sample_metrics(df: pd.DataFrame) -> dict[str, float]:
 def summarize_predictions(df: pd.DataFrame) -> tuple[dict[str, float], pd.DataFrame]:
     summary = sample_metrics(df)
     sample_rows = []
-    for (cluster_id, sample_id), sample_df in df.groupby(["cluster_id_30", "sample_id"], sort=False):
+    for (cluster_id, sample_id), sample_df in tqdm(df.groupby(["cluster_id_30", "sample_id"], sort=False), total=df.groupby(["cluster_id_30", "sample_id"]).ngroups):
         row = {"cluster_id_30": cluster_id, "sample_id": sample_id}
         row.update(sample_metrics(sample_df))
         sample_rows.append(row)
