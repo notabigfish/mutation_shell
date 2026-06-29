@@ -27,3 +27,18 @@ python scripts/evaluate_strict_baselines.py \
     --pred coordinate_residual=outputs/c1000/coordinate_residual/predictions_test.csv \
     --candidate base_v5 \
     --out-dir outputs/c1000/strict_baseline_comparison
+
+
+python scripts/threshold_sensitivity.py \
+  --pred base_v5=outputs/c1000/base_v5/predictions_test.csv \
+  --pred zero_response=outputs/c1000/zero_response/predictions_test.csv \
+  --pred global_mean=outputs/c1000/global_mean/predictions_test.csv \
+  --pred shell_mean=outputs/c1000/shell_mean/predictions_test.csv \
+  --pred mutation_type_shell_mean=outputs/c1000/mutation_type_shell_mean/predictions_test.csv \
+  --pred esm_mlp=outputs/c1000/esm_mlp/predictions_test.csv \
+  --pred geometry_gnn=outputs/c1000/geometry_gnn/predictions_test.csv \
+  --pred coordinate_residual=outputs/c1000/coordinate_residual/predictions_test.csv \
+  --response-thresholds 0.1 0.2 0.3 0.4 0.5 0.6 0.7 \
+  --radius-thresholds 6 8 10 12 \
+  --displacement-thresholds 0.5 1.0 1.5 2.0 \
+  --out outputs/c1000/threshold_sensitivity.csv

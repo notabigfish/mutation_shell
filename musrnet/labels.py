@@ -4,8 +4,8 @@ from typing import Any
 
 import numpy as np
 
-from musrnet.alignment import kabsch_align
-from musrnet.constants import ALIGNMENT_EXCLUSION_RADIUS, PERTURBATION_THRESHOLD, SHELL_BOUNDS
+from musrnet.alignment import align_by_variant
+from musrnet.constants import PERTURBATION_THRESHOLD, SHELL_BOUNDS
 
 
 def compute_shell_ids(radii: np.ndarray) -> np.ndarray:
@@ -22,6 +22,9 @@ def build_structural_labels(
     coords_mut: np.ndarray,
     mut_pos: int,
     displacement_threshold: float = PERTURBATION_THRESHOLD,
+    alignment_variant: str = "kabsch_exclude_4A",
+    tmalign_bin: str | None = None,
+    sample_id: str | None = None,
 ) -> dict[str, Any]:
     if not (0 <= mut_pos < coords_wt.shape[0]):
         raise ValueError("Mutation position is out of range")
@@ -30,8 +33,15 @@ def build_structural_labels(
 
     mut_coord = coords_wt[mut_pos]
     radii = np.linalg.norm(coords_wt - mut_coord[None, :], axis=1)
-    align_mask = radii > ALIGNMENT_EXCLUSION_RADIUS
-    coords_wt_aligned, _, _ = kabsch_align(coords_wt, coords_mut, align_mask)
+    alignment = align_by_variant(
+        coords_wt=coords_wt,
+        coords_mut=coords_mut,
+        mut_pos=mut_pos,
+        variant=alignment_variant,
+        tmalign_bin=tmalign_bin,
+        sample_id=sample_id,
+    )
+    coords_wt_aligned = alignment.coords_wt_aligned
     displacement = np.linalg.norm(coords_wt_aligned - coords_mut, axis=1)
     shell_id = compute_shell_ids(radii)
     perturbed = (displacement > displacement_threshold).astype(np.float32)
@@ -52,6 +62,11 @@ def build_structural_labels(
         "perturbed": perturbed,
         "radius_label": np.array([radius_label], dtype=np.float32),
         "class_label": np.array([class_label], dtype=np.int64),
+        "alignment_variant": alignment.alignment_name,
+        "alignment_rmsd": np.array([alignment.alignment_rmsd], dtype=np.float32),
+        "alignment_n_residues": np.array([alignment.n_aligned_residues], dtype=np.int64),
+        "alignment_mask_fraction": np.array([alignment.mask.mean()], dtype=np.float32),
+        "alignment_metadata": alignment.metadata,
     }
 
 

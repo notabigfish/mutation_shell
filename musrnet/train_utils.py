@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import json
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +17,12 @@ def save_yaml(path: str | Path, data: dict[str, Any]) -> None:
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as handle:
         yaml.safe_dump(data, handle, sort_keys=False)
+
+
+def save_json(path: str | Path, data: Any) -> None:
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(data, handle, indent=2)
 
 
 def append_log_row(csv_path: str | Path, row: dict[str, Any]) -> None:

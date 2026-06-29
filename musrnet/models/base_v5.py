@@ -72,6 +72,7 @@ class MuSRNet(nn.Module):
         radii: torch.Tensor | None = None,
         is_mutation_site: torch.Tensor | None = None,
         mut_pos: torch.Tensor | None = None,
+        disable_mutation_context: bool = False,
     ) -> dict[str, torch.Tensor]:
         del shell_id, mut_pos
         if batch is None:
@@ -90,6 +91,8 @@ class MuSRNet(nn.Module):
             dim=-1,
         )
         mutation_context = self.mutation_mlp(mutation_input)
+        if disable_mutation_context:
+            mutation_context = torch.zeros_like(mutation_context)
         h = self.film(h, mutation_context[batch], radii)
 
         for layer in self.layers:

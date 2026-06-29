@@ -1,0 +1,57 @@
+seed: 42
+paths:
+  samples: data/alignment_sensitivity/kabsch_exclude_4A/samples_manifest.json
+  splits: data/processed/splits_c1000.json
+  output_dir: outputs/c1000/base_v5_align_kabsch_exclude_4A
+data:
+  knn_k: 32
+  batch_size: 256
+  num_workers: 16
+  eval_num_workers: 4
+  prefetch_factor: 1
+  eval_prefetch_factor: 1
+  persistent_workers: true
+  pin_memory: true
+  eval_pin_memory: false
+  max_nodes_per_batch: 22000
+  eval_max_nodes_per_batch: 22000
+  length_bucket_size: 256
+  edge_feature_version: v4
+  alignment_variant: kabsch_exclude_4A
+model_name: base_v5
+model:
+  esm_dim: 1280
+  basic_dim: 57
+  edge_dim: 68
+  esm_proj_dim: 128
+  hidden_dim: 256
+  num_layers: 6
+  dropout: 0.1
+  num_classes: 3
+train:
+  epochs: 100
+  lr: 0.0001
+  weight_decay: 1.0e-05
+  patience: 15
+  grad_clip: 1.0
+  fp16: true
+  logging_steps: 100
+  save_total_limit: 2
+wandb:
+  project_name: musrnet_c1000
+  run_name: base_v5_align_kabsch_exclude_4A
+  run_id: null
+  resume_same_run: false
+loss:
+  delta: 1.0
+  w_perturbed: 0.3
+  w_radius: 0.0
+  w_background: 0.02
+  w_class: 0.0
+  use_log_disp: true
+  use_heteroscedastic_disp: true
+eval:
+  response_threshold: 0.5
+  displacement_threshold: 1.0
+  radius_threshold: 8.0
+  alignment_variant: kabsch_exclude_4A

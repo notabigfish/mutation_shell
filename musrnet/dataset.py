@@ -13,16 +13,23 @@ from torch.utils.data import Dataset
 from musrnet.constants import AA_TO_INDEX, AMINO_ACIDS, RBF_CENTERS, RBF_SIGMA
 from musrnet.esm_embed import load_chain_esm, open_esm_lmdb
 from musrnet.graph import build_graph
-
+from tqdm import tqdm
 
 def load_samples_manifest(samples_path: str | Path) -> dict[str, Any]:
+    samples_path = Path(samples_path)
+    if samples_path.suffix == ".json":
+        with samples_path.open("r", encoding="utf-8") as handle:
+            obj = json.load(handle)
+        if "sample_ids" not in obj or "samples_dir" not in obj:
+            raise ValueError("Unsupported samples file format")
+        return obj
     obj = torch.load(samples_path, map_location="cpu")
     if isinstance(obj, list):
         sample_dir = Path(samples_path).with_suffix("")
         sample_dir.mkdir(parents=True, exist_ok=True)
         sample_ids = []
         metadata = []
-        for sample in obj:
+        for sample in tqdm(obj, desc="Saving samples (load_samples_manifest)"):
             sample_path = sample_dir / f"{sample['sample_id']}.pt"
             torch.save(sample, sample_path)
             sample_ids.append(sample["sample_id"])

@@ -104,6 +104,100 @@ python scripts/evaluate_strict_baselines.py \
     --out-dir outputs/c1000/strict_baseline_comparison
 ```
 
+### Threshold sensitivity
+
+```bash
+python scripts/threshold_sensitivity.py \
+  --pred base_v5=outputs/c1000/base_v5/predictions_test.csv \
+  --pred zero_response=outputs/c1000/zero_response/predictions_test.csv \
+  --pred global_mean=outputs/c1000/global_mean/predictions_test.csv \
+  --pred shell_mean=outputs/c1000/shell_mean/predictions_test.csv \
+  --pred mutation_type_shell_mean=outputs/c1000/mutation_type_shell_mean/predictions_test.csv \
+  --pred esm_mlp=outputs/c1000/esm_mlp/predictions_test.csv \
+  --pred geometry_gnn=outputs/c1000/geometry_gnn/predictions_test.csv \
+  --pred coordinate_residual=outputs/c1000/coordinate_residual/predictions_test.csv \
+  --response-thresholds 0.1 0.2 0.3 0.4 0.5 0.6 0.7 \
+  --radius-thresholds 6 8 10 12 \
+  --displacement-thresholds 0.5 1.0 1.5 2.0 \
+  --out outputs/c1000/threshold_sensitivity.csv
+```
+
+
+## Counterfactual Test
+```bash
+python scripts/counterfactual_tests.py \
+  --config configs/c1000/base_v5.yaml \
+  --checkpoint outputs/c1000/base_v5/best/model.safetensors \
+  --split test \
+  --out-dir outputs/c1000/base_v5_counterfactual 
+```
+
+## Alignment sensitivity
+
+Build one alignment-specific label set:
+
+```bash
+python scripts/build_alignment_sensitivity_data.py \
+  --base-config configs/c1000/base_v5.yaml \
+  --variant kabsch_exclude_4A \
+  --out-config configs/c1000/base_v5_align_kabsch_exclude_4A.yaml
+```
+
+Build all variants:
+
+```bash
+TMALIGN_BIN="$(which TMalign)" \
+bash scripts/run_alignment_sensitivity_build.sh
+```
+
+Train the four alignment-specific runs:
+
+```bash
+bash scripts/run_alignment_sensitivity.sh
+```
+
+Compare label sets before training:
+
+```bash
+python scripts/compare_alignment_labels.py \
+  --reference data/alignment_sensitivity/kabsch_exclude_4A/samples_manifest.json \
+  --candidate data/alignment_sensitivity/kabsch_all/samples_manifest.json \
+  --out-dir results/alignment_sensitivity/label_compare_k4_vs_all
+```
+
+Evaluate four alignment-specific runs:
+```bash
+python scripts/evaluate.py --config configs/c1000/base_v5_align_kabsch_exclude_4A.yaml --checkpoint outputs/c1000/base_v5_align_kabsch_exclude_4A/best/model.safetensors
+python scripts/evaluate.py --config configs/c1000/base_v5_align_kabsch_exclude_8A.yaml --checkpoint outputs/c1000/base_v5_align_kabsch_exclude_8A/best/model.safetensors
+python scripts/evaluate.py --config configs/c1000/base_v5_align_kabsch_all.yaml --checkpoint outputs/c1000/base_v5_align_kabsch_all/best/model.safetensors
+python scripts/evaluate.py --config configs/c1000/base_v5_align_tmalign.yaml --checkpoint outputs/c1000/base_v5_align_tmalign/best/model.safetensors
+```
+
+Collect run results:
+
+```bash
+python scripts/collect_alignment_sensitivity_results.py \
+  --run kabsch_exclude_4A=outputs/c1000/base_v5_align_kabsch_exclude_4A \
+  --run kabsch_exclude_8A=outputs/c1000/base_v5_align_kabsch_exclude_8A \
+  --run kabsch_all=outputs/c1000/base_v5_align_kabsch_all \
+  --run tmalign=outputs/c1000/base_v5_align_tmalign \
+  --out-dir results/alignment_sensitivity/final
+```
+
+Cluster-level paired comparison:
+
+```bash
+python scripts/cluster_compare_alignment_sensitivity.py \
+  --pred kabsch_exclude_4A=outputs/c1000/base_v5_align_kabsch_exclude_4A/predictions_test.csv \
+  --pred kabsch_exclude_8A=outputs/c1000/base_v5_align_kabsch_exclude_8A/predictions_test.csv \
+  --pred kabsch_all=outputs/c1000/base_v5_align_kabsch_all/predictions_test.csv \
+  --pred tmalign=outputs/c1000/base_v5_align_tmalign/predictions_test.csv \
+  --reference kabsch_exclude_4A \
+  --out-dir results/alignment_sensitivity/cluster_compare
+```
+
+
+
 ## Outputs
 
 - `data/processed/samples.pt`
