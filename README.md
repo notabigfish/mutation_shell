@@ -12,6 +12,7 @@ The main CSV file is `data/SingleMutPairs2024.csv` with columns:
     "mut_chain_id",
     "mut_pos_seq_index",
     "mut_pos_pdb_number",
+    "wt_pos_pdb_number",
     "wt_aa_type",
     "mut_aa_type",
     "wt_sequence",
@@ -162,7 +163,7 @@ Compare label sets before training:
 python scripts/compare_alignment_labels.py \
   --reference data/alignment_sensitivity/kabsch_exclude_4A/samples_manifest.json \
   --candidate data/alignment_sensitivity/kabsch_all/samples_manifest.json \
-  --out-dir results/alignment_sensitivity/label_compare_k4_vs_all
+  --out-dir outputs/alignment_sensitivity/label_compare_k4_vs_all
 ```
 
 Evaluate four alignment-specific runs:
@@ -173,7 +174,7 @@ python scripts/evaluate.py --config configs/c1000/base_v5_align_kabsch_all.yaml 
 python scripts/evaluate.py --config configs/c1000/base_v5_align_tmalign.yaml --checkpoint outputs/c1000/base_v5_align_tmalign/best/model.safetensors
 ```
 
-Collect run results:
+Collect run outputs:
 
 ```bash
 python scripts/collect_alignment_sensitivity_results.py \
@@ -181,7 +182,7 @@ python scripts/collect_alignment_sensitivity_results.py \
   --run kabsch_exclude_8A=outputs/c1000/base_v5_align_kabsch_exclude_8A \
   --run kabsch_all=outputs/c1000/base_v5_align_kabsch_all \
   --run tmalign=outputs/c1000/base_v5_align_tmalign \
-  --out-dir results/alignment_sensitivity/final
+  --out-dir outputs/alignment_sensitivity/final
 ```
 
 Cluster-level paired comparison:
@@ -193,7 +194,47 @@ python scripts/cluster_compare_alignment_sensitivity.py \
   --pred kabsch_all=outputs/c1000/base_v5_align_kabsch_all/predictions_test.csv \
   --pred tmalign=outputs/c1000/base_v5_align_tmalign/predictions_test.csv \
   --reference kabsch_exclude_4A \
-  --out-dir results/alignment_sensitivity/cluster_compare
+  --out-dir outputs/alignment_sensitivity/cluster_compare
+```
+
+## Biological stratification
+
+Single-model biological stratification:
+
+```bash
+python scripts/evaluate_biological_stratification.py \
+  --config configs/c1000/base_v5.yaml \
+  --pred MuSRNet=outputs/c1000/base_v5/predictions_test.csv \
+  --sample-csv data/SingleMutPairs2024_subset_c1000.with_wt_pos.csv \
+  --pdb-dir data/pdb \
+  --domain-annotations data/domain_annotations_subset_c1000.csv \
+  --out-dir outputs/c1000/base_v5/biological_stratification/ \
+  --num-workers 30 2>&1 | tee out.log
+```
+
+Reference-vs-candidate stratified comparison:
+
+```bash
+python scripts/evaluate_biological_stratification.py \
+  --config configs/c1000/base_v5.yaml \
+  --pred base_v5=outputs/c1000/base_v5/predictions_test.csv \
+  --pred shell_mean=outputs/c1000/shell_mean/predictions_test.csv \
+  --reference shell_mean \
+  --candidate base_v5 \
+  --sample-csv data/SingleMutPairs2024_subset_c1000.with_wt_pos.csv \
+  --pdb-dir data/pdb \
+  --domain-annotations data/domain_annotations_subset_c1000.csv \
+  --out-dir outputs/c1000/base_v5/vs_shell_mean \
+  --num-workers 30
+```
+
+Optional best-effort domain annotation helper:
+
+```bash
+python scripts/fetch_rcsb_domain_annotations.py \
+  --sample-csv data/SingleMutPairs2024_subset_c1000.csv \
+  --out-csv data/domain_annotations.csv \
+  --cache-json data/domain_annotations_cache.json
 ```
 
 

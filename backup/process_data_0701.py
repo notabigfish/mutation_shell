@@ -269,16 +269,6 @@ def get_release_date(pdb_id, pdb_format, pdb_root, pdb_version):
 		log_skip("release_date_read_error", pdb_id=pdb_id, extra=str(e))
 	return ""
 
-def safe_get_release_date(pdb_id, pdb_format, pdb_root, pdb_version):
-	try:
-		return get_release_date(pdb_id, pdb_format, pdb_root, pdb_version)
-	except FunctionTimedOut:
-		log_skip("release_date_timeout", pdb_id=pdb_id)
-		return ""
-	except Exception as e:
-		log_skip("release_date_error", pdb_id=pdb_id, extra=str(e))
-		return ""
-	
 def hamming_distance(seq_a, seq_b):
 	if len(seq_a) != len(seq_b): return None
 	return sum(a != b for a, b in zip(seq_a, seq_b))
@@ -317,10 +307,9 @@ def validate_required_dataset_df(df):
 		if mut_seq[pos] != row.mut_aa_type:
 			bad_rows.append((row.sample_id, "mut_residue_mismatch"))
 			continue
-		# allow missing release_date; resolution/date grouping can treat it as unknown
-		# if not str(row.release_date).strip():
-		# 	bad_rows.append((row.sample_id, "missing_release_date"))
-		# 	continue
+		if not str(row.release_date).strip():
+			bad_rows.append((row.sample_id, "missing_release_date"))
+			continue
 	if bad_rows:
 		raise ValueError(f"Invalid final dataset rows: {bad_rows[:20]}")
 	return True
@@ -700,7 +689,8 @@ def process_match_single_site(items, pdb_format, pdb_root, pdb_version):
 	mut_type = three_to_one(mut_info['MUT'].values[0])
 	pos = int(mut_info['POS'].values[0])
 	mut_pos_pdb_number = int(mut_info['MUT_RES_NUM'].values[0])
-	release_date = safe_get_release_date(mut_id, pdb_format, pdb_root, pdb_version)
+	release_date = get_release_date(mut_id, pdb_format, pdb_root, pdb_version)
+
 	try:
 		mut_seq = mut_seqs[mut]
 	except KeyError:
@@ -746,42 +736,6 @@ def process_match_single_site(items, pdb_format, pdb_root, pdb_version):
 			mut_seq[pos] == mut_type and
 			wt_seq[pos] == wt_type
 		):
-			# IMPORTANT:
-			# mut_pos_pdb_number belongs to mutant PDB.
-			# For WT RSA/DSSP, resolve the same sequence index in the WT structure.
-			wt_df = read_pdb(wt_id, wt_chain_id, pdb_format, pdb_root, pdb_version)
-			wt_seq_checked, wt_idx_to_pdb = get_seq_and_index_to_pdb_mapping(wt_df)
-
-			if wt_seq_checked is None or wt_idx_to_pdb is None:
-				logger.warning(
-					"skip_wt_residue_mapping_failed | wt_chain=%s_%s | mut_chain=%s",
-					wt_id,
-					wt_chain_id,
-					mut,
-				)
-				continue
-
-			if wt_seq_checked != wt_seq:
-				logger.warning(
-					"skip_wt_sequence_mapping_mismatch | wt_chain=%s_%s | mut_chain=%s",
-					wt_id,
-					wt_chain_id,
-					mut,
-				)
-				continue
-
-			if pos not in wt_idx_to_pdb:
-				logger.warning(
-					"skip_wt_mutation_index_unmapped | wt_chain=%s_%s | pos=%s | mut_chain=%s",
-					wt_id,
-					wt_chain_id,
-					pos,
-					mut,
-				)
-				continue
-
-			wt_pos_pdb_number = int(wt_idx_to_pdb[pos])
-
 			sample_id = (
 				f"{wt_id}_{wt_chain_id}"
 				f"__{mut_id}_{mut_chain_id}"
@@ -795,7 +749,6 @@ def process_match_single_site(items, pdb_format, pdb_root, pdb_version):
 				mut_chain_id,
 				pos,
 				mut_pos_pdb_number,
-				wt_pos_pdb_number,
 				wt_type,
 				mut_type,
 				wt_seq,
@@ -1138,9 +1091,9 @@ if __name__ == "__main__":
 		with open(output_file, 'w') as json_file:
 			json.dump(matching_dict, json_file)
 
-	with open(os.path.join(args.output_dir, 'matching_dict.json'), 'r') as json_file:
-		matching_dict = json.load(json_file)
-	print("Total number of matches: ", len(matching_dict))
+		with open(os.path.join(args.output_dir, 'matching_dict.json'), 'r') as json_file:
+			matching_dict = json.load(json_file)
+		print("Total number of matches: ", len(matching_dict))
 
 	if args.re_internalcsv:
 		mut_seqs = {}
@@ -1276,15 +1229,9 @@ if __name__ == "__main__":
 			# Enforce types
 			final_df['mut_pos_seq_index'] = final_df['mut_pos_seq_index'].astype(int)
 			final_df['mut_pos_pdb_number'] = final_df['mut_pos_pdb_number'].astype(int)
-			final_df['wt_pos_pdb_number'] = final_df['wt_pos_pdb_number'].astype(int)
 			final_df['wt_pdb_id'] = final_df['wt_pdb_id'].astype(str).str.lower()
 			final_df['mut_pdb_id'] = final_df['mut_pdb_id'].astype(str).str.lower()
-			final_df['release_date'] = (
-				final_df['release_date']
-				.astype(str)
-				.str.strip()
-				.replace({"": "unknown", "nan": "unknown", "None": "unknown"})
-			)
+
 			validate_required_dataset_df(final_df)
 			final_df.to_csv(pair_csv, index=False)
 			logger.info(

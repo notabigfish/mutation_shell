@@ -56,8 +56,11 @@ def build_sample(row: dict[str, Any], pdb_format: str, pdb_root: str, pdb_versio
 	mut_aa = str(row["mut_aa_type"])
 	if wt_sequence[mut_pos] != wt_aa or mut_sequence[mut_pos] != mut_aa:
 		return row['sample_id'], "invalid mutation position residue"
-	# if wt_info["residues"][mut_pos]["pdb_number"] != int(row["mut_pos_pdb_number"]):
-	# 	return row['sample_id'], "invalid mutation position PDB number"
+	if wt_info["residues"][mut_pos]["pdb_number"] != int(row["wt_pos_pdb_number"]):
+		return row['sample_id'], "invalid WT mutation position PDB number"
+
+	if mut_info["residues"][mut_pos]["pdb_number"] != int(row["mut_pos_pdb_number"]):
+		return row['sample_id'], "invalid mutant mutation position PDB number"
 
 	coords_wt = wt_info["coords"]
 	coords_mut = mut_info["coords"]
@@ -76,6 +79,8 @@ def build_sample(row: dict[str, Any], pdb_format: str, pdb_root: str, pdb_versio
 		"mut_pdb_id": str(row["mut_pdb_id"]).lower(),
 		"mut_chain_id": str(row["mut_chain_id"]),
 		"mut_pos": mut_pos,
+		"wt_pos_pdb_number": int(row["wt_pos_pdb_number"]),
+		"mut_pos_pdb_number": int(row["mut_pos_pdb_number"]),
 		"wt_aa": wt_aa,
 		"mut_aa": mut_aa,
 		"wt_sequence": wt_sequence,
