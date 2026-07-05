@@ -26,6 +26,7 @@ from musrnet.train_utils import load_yaml, save_yaml
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Evaluate non-trainable strict baselines")
     parser.add_argument("--config", required=True)
+    parser.add_argument("--splits", default="test", help="Comma-separated split names, e.g. train,valid,test")
     return parser.parse_args()
 
 
@@ -228,7 +229,7 @@ def main() -> None:
         json.dump(stats, handle, indent=2)
     save_yaml(output_dir / "config_used.yaml", config)
 
-    for split in ["train", "valid", "test"]:
+    for split in args.splits.split(","):
         samples = [load_sample_from_manifest(manifest, sample_id) for sample_id in splits[split]]
         metrics, rows = evaluate_split(model, samples, config.get("eval", {}))
         with (output_dir / f"eval_{split}.json").open("w", encoding="utf-8") as handle:

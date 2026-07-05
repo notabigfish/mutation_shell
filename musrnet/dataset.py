@@ -115,6 +115,10 @@ def create_or_load_splits(
     if splits_path.exists():
         with splits_path.open("r", encoding="utf-8") as handle:
             splits = json.load(handle)
+        required_keys = {"train", "valid", "test"}
+        missing_keys = sorted(required_keys - set(splits))
+        if missing_keys:
+            raise ValueError(f"Split JSON is missing required keys: {missing_keys}")
         return {
             split: [sample_id for sample_id in sample_ids if sample_id in manifest_sample_ids]
             for split, sample_ids in splits.items()

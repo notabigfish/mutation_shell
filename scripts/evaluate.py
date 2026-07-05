@@ -27,6 +27,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Evaluate MuSRNet")
     parser.add_argument("--config", required=True)
     parser.add_argument("--checkpoint", required=True)
+    parser.add_argument("--splits", default="test", help="Comma-separated split names, e.g. train,valid,test")
     return parser.parse_args()
 
 
@@ -167,8 +168,13 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     edge_feature_version = config["data"].get("edge_feature_version", "v1")
 
-    # for split in ["train", "valid", "test"]:
-    for split in ["test"]:
+    requested_splits = [split.strip() for split in args.splits.split(",") if split.strip()]
+    allowed_splits = {"train", "valid", "test"}
+    invalid = [split for split in requested_splits if split not in allowed_splits]
+    if invalid:
+        raise ValueError(f"Invalid split names: {invalid}. Allowed: {sorted(allowed_splits)}")
+
+    for split in requested_splits:
         dataset = MuSRNetDataset(manifest, splits[split], config["data"]["knn_k"], edge_feature_version=edge_feature_version)
         batch_sampler = LengthBucketBatchSampler(
             dataset=dataset,

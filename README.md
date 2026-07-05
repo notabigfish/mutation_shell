@@ -62,6 +62,15 @@ python scripts/train.py --config configs/c1000/base_v2.yaml
 python scripts/evaluate.py --config configs/c1000/base_v5.yaml --checkpoint outputs/c1000/base_v5/checkpoint-13291/model.safetensors
 ```
 
+Evaluate multiple splits:
+
+```bash
+python scripts/evaluate.py \
+  --config configs/c1000/base_v5.yaml \
+  --checkpoint outputs/c1000/base_v5/best/model.safetensors \
+  --splits train,valid,test
+```
+
 ### Cluster Eval
 ```bash
 python scripts/cluster_eval.py \
@@ -235,6 +244,40 @@ python scripts/fetch_rcsb_domain_annotations.py \
   --sample-csv data/SingleMutPairs2024_subset_c1000.csv \
   --out-csv data/domain_annotations.csv \
   --cache-json data/domain_annotations_cache.json
+```
+
+## Time-split generalization
+
+Create the cluster-safe time split:
+
+```bash
+python scripts/create_time_split.py \
+  --config configs/c1000/base_v5.yaml \
+  --csv data/SingleMutPairs2024_subset_c1000.csv \
+  --out data/processed/splits_time_c1000_2023_2024_2025.json \
+  --cluster-policy latest_release \
+  --train-max-year 2023 \
+  --valid-year 2024 \
+  --test-min-year 2025
+```
+
+Train and evaluate `base_v5` on the time split:
+
+```bash
+python scripts/train.py --config configs/c1000/base_v5_time.yaml
+python scripts/evaluate.py \
+  --config configs/c1000/base_v5_time.yaml \
+  --checkpoint outputs/c1000/base_v5_time/best/model.safetensors \
+  --splits train,valid,test
+```
+
+Write the compact time-split report:
+
+```bash
+python scripts/report_time_split.py \
+  --config configs/c1000/base_v5_time.yaml \
+  --audit-dir data/processed/time_split_c1000_2023_2024_2025_audit \
+  --output-dir outputs/c1000/base_v5_time
 ```
 
 
