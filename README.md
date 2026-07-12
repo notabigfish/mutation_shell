@@ -37,6 +37,7 @@ cd /rds/projects/l/liuje-multiai/shuo/mutation/MuSRNet
 python process_data.py --output_dir data/ --pdb_version pdb_260603 --pdb_format mmcif --re_subset --n_clusters 1000
 ```
 
+
 ```bash
 python scripts/prepare_data.py --csv data/SingleMutPairs2024_subset_c1000.csv  --out data/processed/samples_subset_c1000_raw.pt
 ```

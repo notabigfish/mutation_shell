@@ -553,7 +553,7 @@ def build_wt_mut_fasta_record(row, pdb_format, pdb_root, pdb_version):
 	pdb_id = row['ID']
 	mut_type = row['MUT']
 	chain_id = row['CHAIN']
-	pos = row['POS']
+	pos = int(row['POS'])
 	wt_type = row['WT']
 	mut_df = read_pdb(pdb_id, chain_id, pdb_format, pdb_root, pdb_version)
 	mut_seq, _ = get_seq_and_mapping(mut_df)
@@ -957,7 +957,7 @@ if __name__ == "__main__":
 		pdb_files = glob.glob(os.path.join(args.pdb_root, args.pdb_version, 'pdb', '*.gz'))
 		partial_func = partial(find_engineered_mutation_file, pdb_root=args.pdb_root, pdb_version=args.pdb_version)
 		with Pool(N_CPUS) as pool:
-			_ = list(tqdm.tqdm(pool.imap_unordered(partial_func, pdb_files), total=len(pdb_files)))
+			_ = list(tqdm.tqdm(pool.imap_unordered(partial_func, pdb_files), total=len(pdb_files), desc="re_symlink_mut"))
 
 	# parse mutation information
 	## 1. mutation site, wt type, mutant type
@@ -967,7 +967,7 @@ if __name__ == "__main__":
 		pdb_files = glob.glob(os.path.join(pdb_dir, '*.gz'))
 
 		with Pool(N_CPUS) as pool:
-			seqadv_lines = list(tqdm.tqdm(pool.imap(parse_seqadv_records, pdb_files), total=len(pdb_files)))
+			seqadv_lines = list(tqdm.tqdm(pool.imap(parse_seqadv_records, pdb_files), total=len(pdb_files), desc="re_group_seqadv"))
 
 		seqadv_lines = [item for sublist in seqadv_lines for item in sublist]
 		df_seqadv = pd.DataFrame(seqadv_lines, columns=['ID', 'MUT', 'CHAIN', 'POS', 'iCODE', 'DBREF', 'DBREFID', 'WT', 'UNK_POS'])
@@ -998,7 +998,7 @@ if __name__ == "__main__":
 		results = []
 		with Pool(N_CPUS) as pool:
 			partial_func = partial(process_mutation_group, pdb_format=args.pdb_format, pdb_root=args.pdb_root, pdb_version=args.pdb_version)
-			for res in tqdm.tqdm(pool.imap_unordered(partial_func, grouped_seqadv, chunksize=1), total=len(grouped_seqadv)):
+			for res in tqdm.tqdm(pool.imap_unordered(partial_func, grouped_seqadv, chunksize=1), total=len(grouped_seqadv), desc='re_mutations'):
 				results.append(res)
 
 		corrected_df_seqadv = [item for sublist in results for item in sublist]
@@ -1026,10 +1026,10 @@ if __name__ == "__main__":
 		if args.multi_site:
 			grouped = list(muts.groupby(['ID', 'CHAIN']))
 			partial_func = partial(build_wt_mut_fasta_record_group, pdb_format=args.pdb_format, pdb_root=args.pdb_root, pdb_version=args.pdb_version)
-			results = list(progress_map(partial_func, grouped, n_cpu=N_CPUS))
+			results = list(tqdm.tqdm(tqdmprogress_map(partial_func, grouped, n_cpu=N_CPUS), total=len(grouped), desc="re_seqfasta"))
 		else:
 			partial_func = partial(build_wt_mut_fasta_record, pdb_format=args.pdb_format, pdb_root=args.pdb_root, pdb_version=args.pdb_version)
-			results = list(progress_map(partial_func, muts.to_dict('records'), n_cpu=N_CPUS))
+			results = list(tqdm.tqdm(progress_map(partial_func, muts.to_dict('records'), n_cpu=N_CPUS), total=len(muts), desc="re_seqfasta"))
 		mut_results = [result[0] for result in results if result is not None]
 		wt_results = [result[1] for result in results if result is not None]
 		write_fasta(wt_results, os.path.join(args.output_dir, 'wt_seqs.fasta'))
@@ -1063,19 +1063,13 @@ if __name__ == "__main__":
 		# Process files in parallel with progress tracking
 		print(f"Processing {len(all_pdb_files)} PDB files with {N_CPUS} processes in {len(file_batches)} batches")
 		with Pool(processes=N_CPUS) as pool:
-			# Process with imap to show progress
 			all_results = []
 			completed = 0
 			total = len(file_batches)
 			partial_func = partial(process_batch, pdb_format=args.pdb_format, pdb_root=args.pdb_root, pdb_version=args.pdb_version)
-			for batch_result in pool.imap_unordered(partial_func, file_batches):
-				completed += 1
+			for batch_result in tqdm.tqdm(pool.imap_unordered(partial_func, file_batches), total=total, desc="re_wholefasta"):
 				if batch_result:
 					all_results.extend(batch_result)
-				# Print progress
-				if completed % 10 == 0 or completed == total:
-					print(f"Progress: {completed}/{total} batches ({completed*100//total}%) - Sequences found: {len(all_results)}")
-		# Write results to file
 		print(f"Writing {len(all_results)} sequences to {output_file}")
 		write_fasta(all_results, output_file)
 
@@ -1125,7 +1119,7 @@ if __name__ == "__main__":
 			total_lines = sum(1 for _ in f)
 
 		with open(result_file) as f:
-			for line in tqdm.tqdm(f, total=total_lines):
+			for line in tqdm.tqdm(f, total=total_lines, desc="re_gen_matching_dict"):
 				parts = line.strip().split('\t')
 				query_id, target_id, identity = parts[0], parts[1], float(parts[2])
 				alnlen = int(parts[3])
@@ -1156,7 +1150,7 @@ if __name__ == "__main__":
 
 		muts_info = pd.read_csv(mutation_file, dtype=str, keep_default_na=False)
 		partial_func = partial(process_match, pdb_format=args.pdb_format, pdb_root=args.pdb_root, pdb_version=args.pdb_version, multi_site=args.multi_site)
-		results = list(progress_map(partial_func, matching_dict.items(), n_cpu=N_CPUS))
+		results = list(tqdm.tqdm(progress_map(partial_func, matching_dict.items(), n_cpu=N_CPUS), total=len(matching_dict), desc="re_internalcsv"))
 
 		out_lines = [result for result in results if result is not None]
 		out_lines = [item for sublist in out_lines for item in sublist]
@@ -1203,7 +1197,7 @@ if __name__ == "__main__":
 			for record in SeqIO.parse(mut_fasta, 'fasta'):
 				mut_seqs[record.id] = str(record.seq)
 
-		results = list(progress_map(build_cluster_fasta_record, muts_info['mut_chain'], n_cpu=N_CPUS))
+		results = list(tqdm.tqdm(progress_map(build_cluster_fasta_record, muts_info['mut_chain'], n_cpu=N_CPUS), total=len(muts_info), desc="re_mutseqsv2"))
 		results = [result for result in results if result is not None]
 
 		write_fasta(results, os.path.join(args.output_dir, "mut_seqs_v2.fasta"))
