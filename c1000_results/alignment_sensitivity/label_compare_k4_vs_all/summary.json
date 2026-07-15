@@ -1,0 +1,14 @@
+{
+  "n_common_samples": 229421,
+  "mean_abs_diff_disp": 0.007258548866957426,
+  "median_abs_diff_disp": 0.0017230510711669922,
+  "pearson_corr_disp": 0.9997884278832849,
+  "spearman_corr_disp": 0.9991461487684106,
+  "perturbed_jaccard": 0.9834056995611166,
+  "perturbed_flip_fraction": 0.002178931390805579,
+  "shell0_mean_abs_diff_disp": 0.03126352758681686,
+  "shell1_mean_abs_diff_disp": 0.01606839604372976,
+  "shell4_mean_abs_diff_disp": 0.005938412314528469,
+  "radius_mean_abs_diff": 0.08677561832411368,
+  "class_disagreement_fraction": 0.0019614595002201193
+}
