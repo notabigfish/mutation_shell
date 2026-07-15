@@ -34,6 +34,10 @@ cd /rds/projects/l/liuje-multiai/shuo/mutation/MuSRNet
 ## Preprocessing
 
 ```bash
+# full
+python process_data.py --output_dir data/ --pdb_version pdb_260603 --pdb_format mmcif --re_group_seqadv --re_mutations --re_seqfasta --re_wholefasta --re_genmatchesm8 --re_gen_matching_dict --re_internalcsv --re_mutseqsv2 --re_cluster --num_workers 30 2>&1 | tee data.log
+
+# only gen subset
 python process_data.py --output_dir data/ --pdb_version pdb_260603 --pdb_format mmcif --re_subset --n_clusters 1000
 ```
 

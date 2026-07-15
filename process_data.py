@@ -1,5 +1,5 @@
 import argparse
-from functools import partial
+from functools import partial, lru_cache
 
 from biopandas.pdb import PandasPdb
 from biopandas.mmcif import PandasMmcif
@@ -9,7 +9,7 @@ import pandas as pd
 import glob
 import tqdm
 import gzip
-from multiprocessing import Pool
+from multiprocessing import Pool, Manager
 import warnings
 from Bio import BiopythonWarning, SeqIO
 from parallelbar import progress_map
@@ -62,15 +62,40 @@ REQUIRED_DATASET_COLUMNS = [
 PAIR_COLUMNS_BEFORE_CLUSTER = [col for col in REQUIRED_DATASET_COLUMNS if col != "cluster_id_30"]
 INTERNAL_PAIR_COLUMNS = PAIR_COLUMNS_BEFORE_CLUSTER + ["mut_chain", "wt_chain"]
 
+STRUCTURE_READ_TIMEOUT_SECONDS = 60
+_LOCAL_TIMED_OUT_STRUCTURE_FILES = set()
+_SHARED_TIMED_OUT_STRUCTURE_FILES = None
 
+
+class CachedStructureReadTimeout(RuntimeError):
+    pass
+
+
+def init_structure_worker(shared_timeout_cache):
+    global _SHARED_TIMED_OUT_STRUCTURE_FILES
+    _SHARED_TIMED_OUT_STRUCTURE_FILES = shared_timeout_cache
+
+def is_structure_timed_out(path):
+    path = os.path.abspath(path)
+    if path in _LOCAL_TIMED_OUT_STRUCTURE_FILES: return True
+
+    if _SHARED_TIMED_OUT_STRUCTURE_FILES is not None and path in _SHARED_TIMED_OUT_STRUCTURE_FILES:
+        _LOCAL_TIMED_OUT_STRUCTURE_FILES.add(path)
+        return True
+    return False
+
+def mark_structure_timed_out(path):
+    path = os.path.abspath(path)
+    _LOCAL_TIMED_OUT_STRUCTURE_FILES.add(path)
+    if _SHARED_TIMED_OUT_STRUCTURE_FILES is not None: _SHARED_TIMED_OUT_STRUCTURE_FILES[path] = True
 
 def parse_args():
 	parser = argparse.ArgumentParser(description='Process PDB files to extract mutation information.')
 	parser.add_argument('--pdb_root', type=str, default='/rds/projects/l/liuje-multiai/shuo/datasets', help='Directory containing PDB files')
-	parser.add_argument('--output_dir', type=str, default='/rds/homes/s/sxz325/shuo/mutation/tmp/muts_data', help='Directory to save extracted mutation information')
+	parser.add_argument('--output_dir', type=str, default='data/', help='Directory to save extracted mutation information')
 	parser.add_argument('--multi_site', action='store_true', help='Flag to indicate if multi-site mutations should be processed')
-	parser.add_argument('--pdb_version', type=str, default='pdb_241028', help='pdb_241028 pdb_260603')
-	parser.add_argument('--pdb_format', type=str, default='pdb', help='pdb mmcif')
+	parser.add_argument('--pdb_version', type=str, default='pdb_260603', help='pdb_241028 pdb_260603')
+	parser.add_argument('--pdb_format', type=str, default='mmcif', help='pdb mmcif')
 	parser.add_argument('--num_workers', type=int, default=-1)
 	parser.add_argument('--re_symlink_mut', action='store_true', help='Whether to restart from scratch instead of using cached intermediate files')
 	parser.add_argument('--re_group_seqadv', action='store_true', help='Whether to restart from scratch instead of using cached intermediate files')
@@ -83,7 +108,7 @@ def parse_args():
 	parser.add_argument('--re_mutseqsv2', action='store_true')
 	parser.add_argument('--re_cluster', action='store_true')
 	parser.add_argument('--re_subset', action='store_true')
-	parser.add_argument('--n_clusters', type=int, default=50, help='Number of clusters to select for subset')
+	parser.add_argument('--n_clusters', type=int, default=-1, help='Number of clusters to select for subset')
 	parser.add_argument('--seed', type=int, default=42)
 
 	args = parser.parse_args()
@@ -103,13 +128,13 @@ def log_skip(reason, pdb_id=None, chain_id=None, extra=None):
 	)
 
 # utils
-@func_set_timeout(60)
+@func_set_timeout(STRUCTURE_READ_TIMEOUT_SECONDS)
 def safe_read_mmcif(path):
-	return PandasMmcif().read_mmcif(path)
+    return PandasMmcif().read_mmcif(path)
 
-@func_set_timeout(60)
+@func_set_timeout(STRUCTURE_READ_TIMEOUT_SECONDS)
 def safe_read_pdb(path):
-	return PandasPdb().read_pdb(path)
+    return PandasPdb().read_pdb(path)
 
 def filter_residues(df, chain_id=None):
 	if chain_id is not None:
@@ -137,32 +162,83 @@ def filter_residues(df, chain_id=None):
 	return df
 
 def read_pdb(pdb_id, chain_id, pdb_format, pdb_root, pdb_version):
-	try:
-		pdb, _ = load_structure_file(pdb_id, pdb_format, pdb_root, pdb_version)
-		return filter_residues(pdb.df['ATOM'], chain_id=chain_id)
-	except FunctionTimedOut:
-		log_skip("file_read_timeout", pdb_id=pdb_id, chain_id=chain_id)
-		return pd.DataFrame()
-	except Exception as e:
-		log_skip("file_read_error", pdb_id=pdb_id, chain_id=chain_id, extra=str(e))
-		return pd.DataFrame()
+    try:
+        pdb, _ = load_structure_file(
+            pdb_id,
+            pdb_format,
+            pdb_root,
+            pdb_version,
+        )
+        return filter_residues(pdb.df['ATOM'], chain_id=chain_id)
+
+    except CachedStructureReadTimeout:
+        log_skip(
+            "file_read_timeout_cached",
+            pdb_id=pdb_id,
+            chain_id=chain_id,
+            extra=(
+                f"timeout={STRUCTURE_READ_TIMEOUT_SECONDS}s; "
+                "previous timeout cached, file not reopened"
+            ),
+        )
+        return pd.DataFrame()
+
+    except FunctionTimedOut:
+        log_skip(
+            "file_read_timeout",
+            pdb_id=pdb_id,
+            chain_id=chain_id,
+            extra=f"timeout={STRUCTURE_READ_TIMEOUT_SECONDS}s",
+        )
+        return pd.DataFrame()
+
+    except Exception as e:
+        log_skip(
+            "file_read_error",
+            pdb_id=pdb_id,
+            chain_id=chain_id,
+            extra=str(e),
+        )
+        return pd.DataFrame()
 
 def load_structure_file(pdb_id, pdb_format, pdb_root, pdb_version):
-	pdb_id = pdb_id.lower()
-	if pdb_format == 'pdb':
-		pdb_path = os.path.join(pdb_root, pdb_version, 'pdb', f'pdb{pdb_id}.ent.gz')
-		pdb = safe_read_pdb(pdb_path)
-		has_multi_model = len(pdb.get_model_start_end()) > 1
-	elif pdb_format == 'mmcif':
-		pdb_path = os.path.join(pdb_root, pdb_version, 'pdb', f'{pdb_id}.cif.gz')
-		pdb = safe_read_mmcif(pdb_path)
-		has_multi_model = pdb.df['ATOM']['pdbx_PDB_model_num'].nunique() > 1
-		pdb.df['ATOM'] = pdb.df['ATOM'].rename(columns=rename_dict)
-		pdb.df['ATOM']['residue_number'] = pd.to_numeric(pdb.df['ATOM']['residue_number'], errors='coerce')
-	else:
-		raise ValueError(f"Unknown pdb_format: {pdb_format}")
-		
-	return pdb, has_multi_model
+    pdb_id = str(pdb_id).lower()
+
+    if pdb_format == 'pdb':
+        pdb_path = os.path.join(
+            pdb_root,
+            pdb_version,
+            'pdb',
+            f'pdb{pdb_id}.ent.gz',
+        )
+    elif pdb_format == 'mmcif':
+        pdb_path = os.path.join(
+            pdb_root,
+            pdb_version,
+            'pdb',
+            f'{pdb_id}.cif.gz',
+        )
+    else:
+        raise ValueError(f"Unknown pdb_format: {pdb_format}")
+
+    pdb_path = os.path.abspath(pdb_path)
+
+    if is_structure_timed_out(pdb_path):
+        raise CachedStructureReadTimeout(f"Previously timed out structure file: {pdb_path}")
+    try:
+        if pdb_format == 'pdb':
+            pdb = safe_read_pdb(pdb_path)
+            has_multi_model = len(pdb.get_model_start_end()) > 1
+        else:
+            pdb = safe_read_mmcif(pdb_path)
+            has_multi_model = (pdb.df['ATOM']['pdbx_PDB_model_num'].nunique() > 1)
+            pdb.df['ATOM'] = pdb.df['ATOM'].rename(columns=rename_dict)
+            pdb.df['ATOM']['residue_number'] = pd.to_numeric(pdb.df['ATOM']['residue_number'], errors='coerce',)
+    except FunctionTimedOut:
+        mark_structure_timed_out(pdb_path)
+        raise
+
+    return pdb, has_multi_model
 
 def get_seq_and_mapping(pdb_df):
 	if pdb_df.empty:
@@ -202,6 +278,34 @@ def get_seq_and_index_to_pdb_mapping(pdb_df):
 		idx_to_pdb[int(idx)] = resnum
 
 	return seq, idx_to_pdb
+
+
+@lru_cache(maxsize=1024)
+def cached_get_wt_sequence_mapping(
+    wt_id,
+    wt_chain_id,
+    pdb_format,
+    pdb_root,
+    pdb_version,
+):
+    """
+    each worker process maintains its own cache of WT sequences and mappings.
+
+    When the same WT chain is used again, it won't be processed again:
+    1. Decompress cif.gz
+    2. Parse mmCIF
+    3. Filter atoms
+    4. Build residue index -> PDB residue number mapping
+    """
+    wt_df = read_pdb(
+        wt_id,
+        wt_chain_id,
+        pdb_format,
+        pdb_root,
+        pdb_version,
+    )
+
+    return get_seq_and_index_to_pdb_mapping(wt_df)
 
 def split_pdb_chain_id(pdb_chain_id):
 	parts = str(pdb_chain_id).split('_', 1)
@@ -476,78 +580,142 @@ def parse_seqadv_records(pdb_file):
 				seqadv_lines.append(parsed)
 	return seqadv_lines
 
-def process_mutation_group(group_data, pdb_format, pdb_root, pdb_version):
-	(pdb_id, chain_id), group = group_data
+def process_mutation_pdb(pdb_data, pdb_format, pdb_root, pdb_version):
+    pdb_id, pdb_group = pdb_data
+    pdb_id = str(pdb_id).lower()
 
-	if pdb_id in EXCLUDE_PDBS + LARGE_PDBS:
-		# continue
-		log_skip("manual_exclusion_known_annotation_issue", pdb_id=pdb_id, chain_id=chain_id)
-		return []
-	try:
-		pdb, has_multi_model = load_structure_file(pdb_id, pdb_format, pdb_root, pdb_version)
-	except FunctionTimedOut:
-		log_skip("file_read_timeout", pdb_id=pdb_id, chain_id=chain_id)
-		return []
-	except Exception as e:
-		log_skip("file_read_error", pdb_id=pdb_id, chain_id=chain_id, extra=str(e))
-		return []
-	if has_multi_model:
-		# continue
-		log_skip("multi_model_mutant_structure", pdb_id=pdb_id, chain_id=chain_id)
-		return []
-	df = filter_residues(pdb.df['ATOM'], chain_id=chain_id)
-	seq, id_mapping = get_seq_and_mapping(df)
-	if seq is None or id_mapping is None:
-		log_skip("empty_or_unmapped_mutant_chain", pdb_id=pdb_id, chain_id=chain_id)
-		return []
+    if pdb_id in EXCLUDE_PDBS + LARGE_PDBS:
+        log_skip(
+            "manual_exclusion_known_annotation_issue",
+            pdb_id=pdb_id,
+        )
+        return []
 
-	if not set(seq).issubset(AA1_SET):
-		log_skip("nonstandard_amino_acid_in_mutant", pdb_id=pdb_id, chain_id=chain_id)
-		return []
-	
-	if len(seq) < MIN_LEN or len(seq) > MAX_LEN:
-		# continue
-		log_skip(
-			"mutant_sequence_length_out_of_range",
-			pdb_id=pdb_id,
-			chain_id=chain_id,
-			extra=f"length={len(seq)}",
-		)
-		return []
-	valid_records = []
-	for line in group.itertuples(index=False, name=None):
-		pos = int(line[3])
-		mut_type = line[1]
-		icode = line[4]
+    try:
+        pdb, has_multi_model = load_structure_file(
+            pdb_id,
+            pdb_format,
+            pdb_root,
+            pdb_version,
+        )
 
-		if (pos, icode) not in id_mapping:
-			# continue
-			log_skip(
-				"mutation_position_unmodeled",
-				pdb_id=pdb_id,
-				chain_id=chain_id,
-				extra=line,
-			)
-			continue
-		correct_index = id_mapping[(pos, icode)]
-		expected_mut_aa = three_to_one(mut_type)
-		observed_aa = seq[correct_index]
+    except CachedStructureReadTimeout:
+        log_skip(
+            "file_read_timeout_cached",
+            pdb_id=pdb_id,
+            extra=(
+                f"timeout={STRUCTURE_READ_TIMEOUT_SECONDS}s; "
+                "previous timeout cached, file not reopened"
+            ),
+        )
+        return []
 
-		if observed_aa != expected_mut_aa:
-			log_skip(
-				"mutation_residue_mismatch",
-				pdb_id=pdb_id,
-				chain_id=chain_id,
-				extra=line,
-			)
-			continue
-		updated_line = list(line)
-		updated_line[3] = correct_index
-		updated_line.append(pos)
-		valid_records.append(updated_line)
-	return valid_records
-	# corrected_df_seqadv.append(line)
+    except FunctionTimedOut:
+        log_skip(
+            "file_read_timeout",
+            pdb_id=pdb_id,
+            extra=f"timeout={STRUCTURE_READ_TIMEOUT_SECONDS}s",
+        )
+        return []
 
+    except Exception as e:
+        log_skip(
+            "file_read_error",
+            pdb_id=pdb_id,
+            extra=str(e),
+        )
+        return []
+
+    if has_multi_model:
+        log_skip(
+            "multi_model_mutant_structure",
+            pdb_id=pdb_id,
+        )
+        return []
+
+    try:
+        # 整个 PDB 只做一次原子过滤
+        filtered_atom_df = filter_residues(pdb.df['ATOM'])
+    except Exception as e:
+        log_skip(
+            "residue_filter_error",
+            pdb_id=pdb_id,
+            extra=str(e),
+        )
+        return []
+
+    if filtered_atom_df.empty:
+        log_skip(
+            "empty_or_unmapped_mutant_structure",
+            pdb_id=pdb_id,
+        )
+        return []
+
+    valid_records = []
+
+    for chain_id, chain_group in pdb_group.groupby('CHAIN', sort=False):
+        chain_id = str(chain_id)
+        chain_df = filtered_atom_df[filtered_atom_df['chain_id'] == chain_id]
+        seq, id_mapping = get_seq_and_mapping(chain_df)
+
+        if seq is None or id_mapping is None:
+            log_skip(
+                "empty_or_unmapped_mutant_chain",
+                pdb_id=pdb_id,
+                chain_id=chain_id,
+            )
+            continue
+
+        if not set(seq).issubset(AA1_SET):
+            log_skip(
+                "nonstandard_amino_acid_in_mutant",
+                pdb_id=pdb_id,
+                chain_id=chain_id,
+            )
+            continue
+
+        if len(seq) < MIN_LEN or len(seq) > MAX_LEN:
+            log_skip(
+                "mutant_sequence_length_out_of_range",
+                pdb_id=pdb_id,
+                chain_id=chain_id,
+                extra=f"length={len(seq)}",
+            )
+            continue
+
+        for line in chain_group.itertuples(index=False, name=None):
+            pos = int(line[3])
+            mut_type = line[1]
+            icode = line[4]
+
+            if (pos, icode) not in id_mapping:
+                log_skip(
+                    "mutation_position_unmodeled",
+                    pdb_id=pdb_id,
+                    chain_id=chain_id,
+                    extra=line,
+                )
+                continue
+
+            correct_index = id_mapping[(pos, icode)]
+            expected_mut_aa = three_to_one(mut_type)
+            observed_aa = seq[correct_index]
+
+            if observed_aa != expected_mut_aa:
+                log_skip(
+                    "mutation_residue_mismatch",
+                    pdb_id=pdb_id,
+                    chain_id=chain_id,
+                    extra=line,
+                )
+                continue
+
+            updated_line = list(line)
+            updated_line[3] = correct_index
+            updated_line.append(pos)
+            valid_records.append(updated_line)
+
+    return valid_records
 
 def build_wt_mut_fasta_record(row, pdb_format, pdb_root, pdb_version):
 	pdb_id = row['ID']
@@ -749,8 +917,24 @@ def process_match_single_site(items, pdb_format, pdb_root, pdb_version):
 			# IMPORTANT:
 			# mut_pos_pdb_number belongs to mutant PDB.
 			# For WT RSA/DSSP, resolve the same sequence index in the WT structure.
-			wt_df = read_pdb(wt_id, wt_chain_id, pdb_format, pdb_root, pdb_version)
-			wt_seq_checked, wt_idx_to_pdb = get_seq_and_index_to_pdb_mapping(wt_df)
+			# wt_df = read_pdb(wt_id, wt_chain_id, pdb_format, pdb_root, pdb_version)
+			# wt_seq_checked, wt_idx_to_pdb = get_seq_and_index_to_pdb_mapping(wt_df)
+
+			# if wt_seq_checked is None or wt_idx_to_pdb is None:
+			# 	logger.warning(
+			# 		"skip_wt_residue_mapping_failed | wt_chain=%s_%s | mut_chain=%s",
+			# 		wt_id,
+			# 		wt_chain_id,
+			# 		mut,
+			# 	)
+			# 	continue
+			wt_seq_checked, wt_idx_to_pdb = cached_get_wt_sequence_mapping(
+				wt_id,
+				wt_chain_id,
+				pdb_format,
+				pdb_root,
+				pdb_version,
+			)
 
 			if wt_seq_checked is None or wt_idx_to_pdb is None:
 				logger.warning(
@@ -760,7 +944,6 @@ def process_match_single_site(items, pdb_format, pdb_root, pdb_version):
 					mut,
 				)
 				continue
-
 			if wt_seq_checked != wt_seq:
 				logger.warning(
 					"skip_wt_sequence_mapping_mismatch | wt_chain=%s_%s | mut_chain=%s",
@@ -996,10 +1179,40 @@ if __name__ == "__main__":
 	# remove positions that are in unmodeled regions
 	if args.re_mutations:
 		results = []
-		with Pool(N_CPUS) as pool:
-			partial_func = partial(process_mutation_group, pdb_format=args.pdb_format, pdb_root=args.pdb_root, pdb_version=args.pdb_version)
-			for res in tqdm.tqdm(pool.imap_unordered(partial_func, grouped_seqadv, chunksize=1), total=len(grouped_seqadv), desc='re_mutations'):
-				results.append(res)
+		seqadv_df_for_mutations = pd.concat([group for _, group in grouped_seqadv], ignore_index=True)
+
+		grouped_seqadv_by_pdb = list(seqadv_df_for_mutations.groupby( 'ID', sort=False))
+
+		with Manager() as manager:
+			timed_out_structure_cache = manager.dict()
+
+			with Pool(processes=N_CPUS, initializer=init_structure_worker, initargs=(timed_out_structure_cache)) as pool:
+				partial_func = partial(
+					process_mutation_pdb,
+					pdb_format=args.pdb_format,
+					pdb_root=args.pdb_root,
+					pdb_version=args.pdb_version,
+				)
+
+				for res in tqdm.tqdm(
+					pool.imap_unordered(
+						partial_func,
+						grouped_seqadv_by_pdb,
+						chunksize=1,
+					),
+					total=len(grouped_seqadv_by_pdb),
+					desc='re_mutations',
+				):
+					results.append(res)
+
+			timed_out_files = list(timed_out_structure_cache.keys())
+
+		logger.info(
+			"re_mutations_complete | pdb_count=%s | "
+			"timeout_file_count=%s",
+			len(grouped_seqadv_by_pdb),
+			len(timed_out_files),
+		)
 
 		corrected_df_seqadv = [item for sublist in results for item in sublist]
 
@@ -1150,7 +1363,19 @@ if __name__ == "__main__":
 
 		muts_info = pd.read_csv(mutation_file, dtype=str, keep_default_na=False)
 		partial_func = partial(process_match, pdb_format=args.pdb_format, pdb_root=args.pdb_root, pdb_version=args.pdb_version, multi_site=args.multi_site)
-		results = list(tqdm.tqdm(progress_map(partial_func, matching_dict.items(), n_cpu=N_CPUS), total=len(matching_dict), desc="re_internalcsv"))
+		# results = list(tqdm.tqdm(progress_map(partial_func, matching_dict.items(), n_cpu=N_CPUS), total=len(matching_dict), desc="re_internalcsv"))
+		with Pool(processes=N_CPUS) as pool:
+			results = list(
+				tqdm.tqdm(
+					pool.imap_unordered(
+						partial_func,
+						matching_dict.items(),
+						chunksize=1
+				),
+				total=len(matching_dict),
+				desc="re_internalcsv"
+				)
+			)
 
 		out_lines = [result for result in results if result is not None]
 		out_lines = [item for sublist in out_lines for item in sublist]

@@ -4,7 +4,6 @@ python scripts/prepare_data.py --csv data/SingleMutPairs2024_subset_c50.csv  --o
 """
 import argparse
 import sys
-from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -22,53 +21,18 @@ from musrnet.pdb_io import find_pdb_file, inspect_chain
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-@lru_cache(maxsize=4096)
-def cached_find_pdb_file(pdb_dir: str, pdb_id: str):
-	return find_pdb_file(pdb_dir, pdb_id)
-
-@lru_cache(maxsize=64)
-def cached_inspect_chain(
-	pdb_path: str,
-	chain_id: str,
-	pdb_format: str,
-	pdb_root: str,
-	pdb_version: str,
-):
-	return inspect_chain(
-		Path(pdb_path),
-		chain_id,
-		pdb_format,
-		pdb_root,
-		pdb_version,
-	)
-
-
 def build_sample(row: dict[str, Any], pdb_format: str, pdb_root: str, pdb_version: str) -> tuple[dict[str, Any] | None, str | None]:
-	pdb_dir = os.path.join(pdb_root, pdb_version, "pdb")
-
 	try:
-		wt_pdb_path = cached_find_pdb_file(pdb_dir, str(row["wt_pdb_id"]).lower())
-		mut_pdb_path = cached_find_pdb_file(pdb_dir, str(row["mut_pdb_id"]).lower())
+		wt_pdb_path = find_pdb_file(os.path.join(pdb_root, pdb_version, 'pdb'), str(row["wt_pdb_id"]).lower())
+		mut_pdb_path = find_pdb_file(os.path.join(pdb_root, pdb_version, 'pdb'), str(row["mut_pdb_id"]).lower())
 	except FileNotFoundError:
-		return row["sample_id"], "missing PDB file"
+		return row['sample_id'], "missing PDB file"
 
 	try:
-		wt_info = cached_inspect_chain(
-			str(wt_pdb_path),
-			str(row["wt_chain_id"]),
-			pdb_format,
-			str(pdb_root),
-			pdb_version,
-		)
-		mut_info = cached_inspect_chain(
-			str(mut_pdb_path),
-			str(row["mut_chain_id"]),
-			pdb_format,
-			str(pdb_root),
-			pdb_version,
-		)
+		wt_info = inspect_chain(wt_pdb_path, str(row["wt_chain_id"]), pdb_format, pdb_root, pdb_version)
+		mut_info = inspect_chain(mut_pdb_path, str(row["mut_chain_id"]), pdb_format, pdb_root, pdb_version)
 	except KeyError:
-		return row["sample_id"], "missing chain"
+		return row['sample_id'], "missing chain"
 
 	if wt_info["missing_ca_count"] > 0 or mut_info["missing_ca_count"] > 0:
 		return row['sample_id'], "missing C-alpha"
@@ -98,8 +62,8 @@ def build_sample(row: dict[str, Any], pdb_format: str, pdb_root: str, pdb_versio
 	if mut_info["residues"][mut_pos]["pdb_number"] != int(row["mut_pos_pdb_number"]):
 		return row['sample_id'], "invalid mutant mutation position PDB number"
 
-	coords_wt = wt_info["coords"].copy()
-	coords_mut = mut_info["coords"].copy()
+	coords_wt = wt_info["coords"]
+	coords_mut = mut_info["coords"]
 	if coords_wt.shape != coords_mut.shape:
 		return row['sample_id'], "sequence mismatch"
 
@@ -166,45 +130,6 @@ def process_row_worker(row: dict, pdb_format: str, pdb_root: Path, pdb_version: 
 	}
 	return {"status": "success", "sample_id": sample["sample_id"], "metadata": meta}
 
-def process_row_batch_worker(
-	rows: list[dict],
-	pdb_format: str,
-	pdb_root: str,
-	pdb_version: str,
-	sample_dir: Path,
-	resume: bool = False,
-) -> list[dict]:
-	return [
-		process_row_worker(
-			row,
-			pdb_format,
-			pdb_root,
-			pdb_version,
-			sample_dir,
-			resume,
-		)
-		for row in rows
-	]
-
-
-def make_pdb_local_batches(
-	chunk: pd.DataFrame,
-	batch_size: int = 32,
-) -> list[list[dict]]:
-	batches = []
-
-	for _, group in chunk.groupby(
-		["wt_pdb_id", "mut_pdb_id"],
-		sort=False,
-		dropna=False,
-	):
-		records = group.to_dict(orient="records")
-
-		for start in range(0, len(records), batch_size):
-			batches.append(records[start:start + batch_size])
-
-	return batches
-
 def parse_args() -> argparse.Namespace:
 	parser = argparse.ArgumentParser(description="Prepare MuSRNet structural samples")
 	parser.add_argument('--pdb_root', type=str, default='/rds/projects/l/liuje-multiai/shuo/datasets', help='Directory containing PDB files')
@@ -265,34 +190,16 @@ def main() -> None:
 				print(f"Processing chunk {chunk_idx} / {args.total_samples // args.chunksize + 1}")
 				chunk_idx += 1
 				total_rows += len(chunk)
-				row_batches = make_pdb_local_batches(chunk, batch_size=32)
-
-				future_to_size = {
-					executor.submit(
-						process_row_batch_worker,
-						batch,
-						args.pdb_format,
-						args.pdb_root,
-						args.pdb_version,
-						sample_dir,
-						args.resume,
-					): len(batch) for batch in row_batches
-				}
-
-				with tqdm(total=len(chunk), desc="prepare_data", leave=False) as progress:
-					for future in as_completed(future_to_size):
-						batch_results = future.result()
-
-						for result in batch_results:
-							if result["status"] == "rejected":
-								reason = result["reason"].split(": ", 1)[1]
-								rejections[reason].append(result["sample_id"])
-							else:
-								rejections["valid samples"] += 1
-								sample_ids.append(result["sample_id"])
-								metadata.append(result["metadata"])
-
-						progress.update(len(batch_results))
+				rows = chunk.to_dict(orient="records")
+				futures = [executor.submit(process_row_worker, row, args.pdb_format, args.pdb_root, args.pdb_version, sample_dir, args.resume) for row in rows]
+				for future in tqdm(as_completed(futures), total=len(futures), desc="prepare_data", leave=False):
+					result = future.result()
+					if result['status'] == "rejected":
+						rejections[result['reason'].split(': ')[1]].append(result['sample_id'])
+					else:
+						rejections['valid samples'] += 1
+						sample_ids.append(result['sample_id'])
+						metadata.append(result['metadata'])
 
 	manifest = {
 		"format": "musrnet_manifest_v1",
