@@ -103,6 +103,14 @@ def compute_losses(
         + w_class_eff * class_loss
     )
 
+    if not torch.isfinite(total):
+        raise RuntimeError(
+            f"Non-finite loss: "
+            f"disp_loss={disp_loss.item()}, "
+            f"pert_loss={pert_loss.item()}, "
+            f"background_penalty={background_penalty.item()}"
+        ) 
+
     loss_dict = {
         "loss": total,
         "disp_loss": disp_loss,

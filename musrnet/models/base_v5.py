@@ -102,8 +102,9 @@ class MuSRNet(nn.Module):
         p = torch.sigmoid(perturbed_logit)
         background = F.softplus(self.background_head(h)).squeeze(-1)
         excess = F.softplus(self.excess_head(h)).squeeze(-1)
-        disp = background + p * excess
-        disp_logvar = self.logvar_head(h).squeeze(-1).clamp(-5.0, 3.0)
+        # disp = background + p * excess
+        disp = torch.clamp(background + p * excess, min=0.0, max=100.0)
+        disp_logvar = self.logvar_head(h).squeeze(-1).clamp(-2.0, 3.0)
         return {
             "disp": disp,
             "background": background,

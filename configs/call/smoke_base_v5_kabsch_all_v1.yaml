@@ -30,7 +30,7 @@ model:
   num_classes: 3
 train:
   epochs: 80
-  lr: 5.0e-5
+  lr: 5e-5
   weight_decay: 1.0e-05
   patience: 10
   grad_clip: 0.5

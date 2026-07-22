@@ -290,6 +290,9 @@ class MuSRNetTrainer(Trainer):
         # # END DEBUG
 
         outputs = forward_model(model, inputs)
+        for key, value in outputs.items():
+            if torch.is_tensor(value) and not torch.isfinite(value).all():
+                raise RuntimeError(f"Non-finite model output: {key}")
 
         # cuda_mem("after_forward")  # DEBUG
         
@@ -610,14 +613,15 @@ def main() -> None:
     )
 
     fp16_enabled = bool(config['train'].get('fp16', True) and torch.cuda.is_available())
-
+    bf16_enabled = bool(config['train'].get('bf16', False) and torch.cuda.is_available() and torch.cuda.is_bf16_supported())
+    assert not (fp16_enabled and bf16_enabled), "Cannot enable both fp16 and bf16"
     training_args = TrainingArguments(
         output_dir=str(output_dir),
         num_train_epochs=config["train"]["epochs"],
         per_device_train_batch_size=config["data"]["batch_size"],
         per_device_eval_batch_size=config["data"]["batch_size"],
-        learning_rate=config["train"]["lr"],
-        weight_decay=config["train"]["weight_decay"],
+        learning_rate=float(config["train"]["lr"]),
+        weight_decay=float(config["train"]["weight_decay"]),
         dataloader_num_workers=config["data"]["num_workers"] if args.num_workers < 0 else args.num_workers,
         dataloader_pin_memory=bool(config["data"].get("pin_memory", False)),        
         eval_strategy="epoch",
@@ -633,6 +637,7 @@ def main() -> None:
         metric_for_best_model="eval_shell_mae",
         greater_is_better=False,
         fp16=fp16_enabled,
+        bf16=bf16_enabled,
         report_to=['wandb'],
         run_name=run_name,
         seed=config["seed"],
