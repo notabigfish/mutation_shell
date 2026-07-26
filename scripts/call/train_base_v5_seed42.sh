@@ -6,11 +6,11 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --mem=128G
 #SBATCH --time=2-00:00:00
-#SBATCH --job-name=base_v5
-#SBATCH --output=/rds/projects/l/liuje-multiai/shuo/mutation/MuSRNet/outputs/call/base_v5.out
+#SBATCH --job-name=base_v5_seed42
+#SBATCH --output=/rds/projects/l/liuje-multiai/shuo/mutation/MuSRNet/outputs/call/base_v5_seed42.out
 
 source ~/.bashrc
 conda activate pt311cu130
 cd /rds/projects/l/liuje-multiai/shuo/mutation/MuSRNet
 
-python scripts/train.py --config configs/call/base_v5.yaml
+python scripts/train.py --config configs/call/base_v5_seed42.yaml

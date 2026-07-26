@@ -2,7 +2,7 @@ seed: 42
 paths:
   samples: data/alignment_sensitivity/call/kabsch_all/samples_manifest.json
   splits: data/processed/splits_call.json
-  output_dir: outputs/call/smoke_base_v5_kabsch_all_bf16_gc0.5_lr5e-5
+  output_dir: outputs/call/base_v5_kabsch_all
 data:
   knn_k: 32
   batch_size: 256
@@ -30,9 +30,9 @@ model:
   num_classes: 3
 train:
   epochs: 80
-  lr: 5.0e-5
+  lr: 1.0e-4
   weight_decay: 1.0e-05
-  patience: 10
+  patience: 50
   grad_clip: 0.5
   fp16: false
   bf16: true
@@ -40,7 +40,7 @@ train:
   save_total_limit: 5
 wandb:
   project_name: musrnet_call
-  run_name: smoke_base_v5_kabsch_all_bf16_gc0.5_lr5e-5
+  run_name: base_v5_kabsch_all
   run_id: null
   resume_same_run: false
 loss:

@@ -1,6 +1,6 @@
 seed: 42
 paths:
-  samples: data/alignment_sensitivity/call/kabsch_all/samples_manifest.json
+  samples: data/processed/samples.pt
   splits: data/processed/splits_call.json
   output_dir: outputs/call/global_mean
 
@@ -15,4 +15,3 @@ eval:
   response_threshold: 0.1
   displacement_threshold: 1.0
   radius_threshold: 8.0
-  alignment_variant: kabsch_all

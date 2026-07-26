@@ -75,15 +75,15 @@ python scripts/cluster_eval.py \
 
 ### call
 ```bash
-# main model: base_v5_kabsch_all
+# main model: base_v5
 python scripts/build_alignment_sensitivity_data.py --base-config configs/call/base_v5.yaml --variant kabsch_all --subset call --out-config configs/call/base_v5_kabsch_all_gen.yaml --workers 16
 # outputs:
 #   configs/call/base_v5_kabsch_all_gen.yaml
 #   data/alignment_sensitivity/call/kabsch_all
 #   outputs/call/alignment_sensitivity
 
-python scripts/train.py --config configs/call/base_v5_kabsch_all.yaml 
-python scripts/evaluate.py --config configs/call/base_v5_kabsch_all.yaml  --checkpoint outputs/call/base_v5_kabsch_all/best/model.safetensors --splits test
+python scripts/train.py --config configs/call/base_v5.yaml 
+python scripts/evaluate.py --config configs/call/base_v5.yaml  --checkpoint outputs/call/base_v5/best/model.safetensors --splits test
 ```
 
 ## Experiment 2: Strict Baselines
@@ -135,7 +135,7 @@ python scripts/train.py --config configs/call/geometry_gnn.yaml
 python scripts/train.py --config configs/call/coordinate_residual.yaml
 ```
 ```bash
-python scripts/evaluate.py --config configs/call/base_v5_kabsch_all.yaml --checkpoint outputs/call/base_v5_kabsch_all/best/model.safetensors
+python scripts/evaluate.py --config configs/call/base_v5.yaml --checkpoint outputs/call/base_v5/best/model.safetensors
 python scripts/evaluate.py --config configs/call/esm_mlp.yaml --checkpoint outputs/call/esm_mlp/best/model.safetensors
 python scripts/evaluate.py --config configs/call/geometry_gnn.yaml --checkpoint outputs/call/geometry_gnn/best/model.safetensors
 python scripts/evaluate.py --config configs/call/coordinate_residual.yaml --checkpoint outputs/call/coordinate_residual/best/model.safetensors
@@ -143,7 +143,7 @@ python scripts/evaluate.py --config configs/call/coordinate_residual.yaml --chec
 
 ```bash
 python scripts/evaluate_strict_baselines.py \
-    --pred base_v5=outputs/call/base_v5_kabsch_all/predictions_test.csv \
+    --pred base_v5=outputs/call/base_v5/predictions_test.csv \
     --pred zero_response=outputs/call/zero_response/predictions_test.csv \
     --pred global_mean=outputs/call/global_mean/predictions_test.csv \
     --pred shell_mean=outputs/call/shell_mean/predictions_test.csv \
@@ -177,7 +177,7 @@ python scripts/threshold_sensitivity.py \
 ### call
 ```bash
 python scripts/threshold_sensitivity.py \
-  --pred base_v5=outputs/call/base_v5_kabsch_all/predictions_test.csv \
+  --pred base_v5=outputs/call/base_v5/predictions_test.csv \
   --pred zero_response=outputs/call/zero_response/predictions_test.csv \
   --pred global_mean=outputs/call/global_mean/predictions_test.csv \
   --pred shell_mean=outputs/call/shell_mean/predictions_test.csv \
@@ -204,14 +204,14 @@ python scripts/counterfactual_tests.py \
 ### call
 ```bash
 python scripts/counterfactual_tests.py \
-  --config configs/call/base_v5_kabsch_all.yaml \
-  --checkpoint outputs/call/base_v5_kabsch_all/best/model.safetensors \
+  --config configs/call/base_v5.yaml \
+  --checkpoint outputs/call/base_v5/best/model.safetensors \
   --split test \
   --response-threshold 0.1 \
   --displacement-threshold 1.0 \
   --radius-threshold 8.0 \
   --mut-aa-esm-mode negate_delta \
-  --out-dir outputs/call/base_v5_kabsch_all_counterfactual 
+  --out-dir outputs/call/base_v5_counterfactual 
 ```
 
 ## Experiment 6: Alignment sensitivity
@@ -285,12 +285,17 @@ Build alignment-specific label sets:
 
 ```bash
 python scripts/build_alignment_sensitivity_data.py \
-  --base-config configs/call/base_v5_kabsch_all.yaml \
+  --base-config configs/call/base_v5.yaml \
+  --variant kabsch_all \
+  --out-config configs/call/base_v5_kabsch_all.yaml
+
+python scripts/build_alignment_sensitivity_data.py \
+  --base-config configs/call/base_v5.yaml \
   --variant kabsch_exclude_4A \
   --out-config configs/call/base_v5_kabsch_exclude_4A.yaml
 
 python scripts/build_alignment_sensitivity_data.py \
-  --base-config configs/call/base_v5_kabsch_all.yaml \
+  --base-config configs/call/base_v5.yaml \
   --variant kabsch_exclude_8A \
   --out-config configs/call/base_v5_kabsch_exclude_8A.yaml
 ```
@@ -298,6 +303,7 @@ python scripts/build_alignment_sensitivity_data.py \
 Train the 3 alignment-specific runs:
 
 ```bash
+python scripts/train.py --config configs/call/base_v5_kabsch_all.yaml
 python scripts/train.py --config configs/call/base_v5_kabsch_exclude_4A.yaml
 python scripts/train.py --config configs/call/base_v5_kabsch_exclude_8A.yaml
 ```
@@ -306,18 +312,24 @@ Compare label sets before training:
 
 ```bash
 python scripts/compare_alignment_labels.py \
+  --reference data/alignment_sensitivity/call/kabsch_all/samples_manifest.json \
+  --candidate data/alignment_sensitivity/call/base_v5/samples_manifest.json \
+  --out-dir outputs/call/alignment_sensitivity/label_compare_all_vs_v5
+
+python scripts/compare_alignment_labels.py \
   --reference data/alignment_sensitivity/call/kabsch_exclude_4A/samples_manifest.json \
-  --candidate data/alignment_sensitivity/call/kabsch_all/samples_manifest.json \
-  --out-dir outputs/call/alignment_sensitivity/label_compare_k4_vs_all
+  --candidate data/alignment_sensitivity/call/base_v5/samples_manifest.json \
+  --out-dir outputs/call/alignment_sensitivity/label_compare_k4_vs_v5
 
 python scripts/compare_alignment_labels.py \
   --reference data/alignment_sensitivity/call/kabsch_exclude_8A/samples_manifest.json \
-  --candidate data/alignment_sensitivity/call/kabsch_all/samples_manifest.json \
-  --out-dir outputs/call/alignment_sensitivity/label_compare_k8_vs_all
+  --candidate data/alignment_sensitivity/call/base_v5/samples_manifest.json \
+  --out-dir outputs/call/alignment_sensitivity/label_compare_k8_vs_v5
 ```
 
 Evaluate 3 alignment-specific runs:
 ```bash
+python scripts/evaluate.py --config configs/call/base_v5_kabsch_all.yaml --checkpoint outputs/call/base_v5_kabsch_all/best/model.safetensors
 python scripts/evaluate.py --config configs/call/base_v5_kabsch_exclude_4A.yaml --checkpoint outputs/call/base_v5_kabsch_exclude_4A/best/model.safetensors
 python scripts/evaluate.py --config configs/call/base_v5_kabsch_exclude_8A.yaml --checkpoint outputs/call/base_v5_kabsch_exclude_8A/best/model.safetensors
 ```
@@ -329,6 +341,7 @@ python scripts/collect_alignment_sensitivity_results.py \
   --run kabsch_exclude_4A=outputs/call/base_v5_kabsch_exclude_4A \
   --run kabsch_exclude_8A=outputs/call/base_v5_kabsch_exclude_8A \
   --run kabsch_all=outputs/call/base_v5_kabsch_all \
+  --run base_v5=outputs/call/base_v5 \
   --out-dir outputs/call/alignment_sensitivity/final
 ```
 
@@ -339,6 +352,7 @@ python scripts/cluster_compare_alignment_sensitivity.py \
   --pred kabsch_exclude_4A=outputs/call/base_v5_kabsch_exclude_4A/predictions_test.csv \
   --pred kabsch_exclude_8A=outputs/call/base_v5_kabsch_exclude_8A/predictions_test.csv \
   --pred kabsch_all=outputs/call/base_v5_kabsch_all/predictions_test.csv \
+  --pred base_v5=outputs/call/base_v5/predictions_test.csv \
   --reference kabsch_exclude_4A \
   --out-dir outputs/call/alignment_sensitivity/cluster_compare_ref_k4
 
@@ -346,6 +360,7 @@ python scripts/cluster_compare_alignment_sensitivity.py \
   --pred kabsch_exclude_4A=outputs/call/base_v5_kabsch_exclude_4A/predictions_test.csv \
   --pred kabsch_exclude_8A=outputs/call/base_v5_kabsch_exclude_8A/predictions_test.csv \
   --pred kabsch_all=outputs/call/base_v5_kabsch_all/predictions_test.csv \
+  --pred base_v5=outputs/call/base_v5/predictions_test.csv \
   --reference kabsch_exclude_8A \
   --out-dir outputs/call/alignment_sensitivity/cluster_compare_ref_k8
 
@@ -353,8 +368,17 @@ python scripts/cluster_compare_alignment_sensitivity.py \
   --pred kabsch_exclude_4A=outputs/call/base_v5_kabsch_exclude_4A/predictions_test.csv \
   --pred kabsch_exclude_8A=outputs/call/base_v5_kabsch_exclude_8A/predictions_test.csv \
   --pred kabsch_all=outputs/call/base_v5_kabsch_all/predictions_test.csv \
+  --pred base_v5=outputs/call/base_v5/predictions_test.csv \
   --reference kabsch_all \
   --out-dir outputs/call/alignment_sensitivity/cluster_compare_ref_all
+
+python scripts/cluster_compare_alignment_sensitivity.py \
+  --pred kabsch_exclude_4A=outputs/call/base_v5_kabsch_exclude_4A/predictions_test.csv \
+  --pred kabsch_exclude_8A=outputs/call/base_v5_kabsch_exclude_8A/predictions_test.csv \
+  --pred kabsch_all=outputs/call/base_v5_kabsch_all/predictions_test.csv \
+  --pred base_v5=outputs/call/base_v5/predictions_test.csv \
+  --reference base_v5 \
+  --out-dir outputs/call/alignment_sensitivity/cluster_compare_ref_v5
 ```
 
 ## Experiment 7: Biological stratification
@@ -404,12 +428,12 @@ Single-model biological stratification:
 
 ```bash
 python scripts/evaluate_biological_stratification.py \
-  --config configs/call/base_v5_kabsch_all.yaml \
-  --pred MuSRNet=outputs/call/base_v5_kabsch_all/predictions_test.csv \
+  --config configs/call/base_v5.yaml \
+  --pred MuSRNet=outputs/call/base_v5/predictions_test.csv \
   --sample-csv data/SingleMutPairs2024.csv \
   --pdb-dir data/pdb \
   --domain-annotations data/domain_annotations.csv \
-  --out-dir outputs/call/base_v5_kabsch_all/biological_stratification/ \
+  --out-dir outputs/call/base_v5/biological_stratification/ \
   --num-workers 30 2>&1 | tee out.log
 ```
 
@@ -419,15 +443,15 @@ Reference-vs-candidate stratified comparison:
 for ref in zero_response global_mean shell_mean mutation_type_shell_mean esm_mlp geometry_gnn coordinate_residual
   do
     python scripts/evaluate_biological_stratification.py \
-      --config configs/call/base_v5_kabsch_all.yaml \
-      --pred base_v5=outputs/call/base_v5_kabsch_all/predictions_test.csv \
+      --config configs/call/base_v5.yaml \
+      --pred base_v5=outputs/call/base_v5/predictions_test.csv \
       --pred ${ref}=outputs/call/${ref}/predictions_test.csv \
       --reference ${ref} \
       --candidate base_v5 \
       --sample-csv data/SingleMutPairs2024.csv \
       --pdb-dir data/pdb \
       --domain-annotations data/domain_annotations.csv \
-      --out-dir outputs/call/base_v5_kabsch_all/vs_${ref} \
+      --out-dir outputs/call/base_v5/vs_${ref} \
       --num-workers 30
   done
 ```
@@ -483,7 +507,7 @@ Create the cluster-safe time split:
 
 ```bash
 python scripts/create_time_split.py \
-  --config configs/call/base_v5_kabsch_all.yaml \
+  --config configs/call/base_v5.yaml \
   --csv data/SingleMutPairs2024.csv \
   --out data/processed/splits_time_call_2023_2024_2025.json \
   --cluster-policy latest_release \
@@ -492,13 +516,13 @@ python scripts/create_time_split.py \
   --test-min-year 2025
 ```
 
-Train and evaluate `base_v5_kabsch_all` on the time split:
+Train and evaluate `base_v5` on the time split:
 
 ```bash
-python scripts/train.py --config configs/call/base_v5_kabsch_all_time.yaml
+python scripts/train.py --config configs/call/base_v5_time.yaml
 python scripts/evaluate.py \
-  --config configs/call/base_v5_kabsch_all_time.yaml \
-  --checkpoint outputs/call/base_v5_kabsch_all_time/best/model.safetensors \
+  --config configs/call/base_v5_time.yaml \
+  --checkpoint outputs/call/base_v5_time/best/model.safetensors \
   --splits train,valid,test
 ```
 
@@ -506,9 +530,9 @@ Write the compact time-split report:
 
 ```bash
 python scripts/report_time_split.py \
-  --config configs/call/base_v5_kabsch_all_time.yaml \
+  --config configs/call/base_v5_time.yaml \
   --audit-dir data/processed/time_split_call_2023_2024_2025_audit \
-  --output-dir outputs/call/base_v5_kabsch_all_time
+  --output-dir outputs/call/base_v5_time
 ```
 
 

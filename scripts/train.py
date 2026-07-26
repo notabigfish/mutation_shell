@@ -40,8 +40,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model-name", default=None)
     parser.add_argument("--run-name", default=None)
     parser.add_argument("--project-name", default=None)
-    parser.add_argument("--wandb-run-id", default=None)
-    parser.add_argument("--resume-wandb", action="store_true")
+    parser.add_argument("--resume-wandb", default=None, help="Wandb run ID to resume")
     parser.add_argument("--resume-from-checkpoint", default=None)
     parser.add_argument("--num-workers", type=int, default=-1, help="Number of workers for data loading (overrides config)")
     return parser.parse_args()
@@ -354,7 +353,7 @@ class MuSRNetTrainer(Trainer):
     def get_train_dataloader(self):
         batch_sampler = self._make_length_batch_sampler(self.train_dataset, train=True)
         num_workers = int(self.args.dataloader_num_workers)
-        prefetch_factor = int(self.batch_cfg.get('prefecth_factor', 1))
+        prefetch_factor = int(self.batch_cfg.get('prefetch_factor', 1))
         persistent_workers = bool(self.batch_cfg.get('persistent_workers', False))
         pin_memory = bool(self.batch_cfg.get('pin_memory', False))
 
@@ -599,7 +598,7 @@ def main() -> None:
 
     project_name = args.project_name or config['wandb']['project_name']
     run_name = args.run_name or config["wandb"]["run_name"]
-    wandb_run_id = args.wandb_run_id or config["wandb"].get("run_id")
+    wandb_run_id = args.resume_wandb or config["wandb"].get("run_id")
     resume_wandb = bool(args.resume_wandb or config["wandb"].get("resume_same_run", False))
 
     os.environ['WANDB_PROJECT'] = project_name

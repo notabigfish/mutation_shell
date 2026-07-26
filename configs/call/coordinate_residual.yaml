@@ -1,6 +1,6 @@
 seed: 42
 paths:
-  samples: data/alignment_sensitivity/call/kabsch_all/samples_manifest.json
+  samples: data/processed/samples.pt
   splits: data/processed/splits_call.json
   output_dir: outputs/call/coordinate_residual
 data:
@@ -17,7 +17,6 @@ data:
   eval_max_nodes_per_batch: 22000
   length_bucket_size: 256
   edge_feature_version: base
-  alignment_variant: kabsch_all
 model_name: coordinate_residual
 model:
   esm_dim: 1280
@@ -28,14 +27,15 @@ model:
   num_layers: 6
   dropout: 0.1
 train:
-  epochs: 100
+  epochs: 80
   lr: 0.0001
   weight_decay: 1.0e-05
-  patience: 15
-  grad_clip: 1.0
-  fp16: true
+  patience: 50
+  grad_clip: 0.5
+  fp16: false
+  bf16: true
   logging_steps: 100
-  save_total_limit: 2
+  save_total_limit: 5
 wandb:
   project_name: musrnet_call
   run_name: coordinate_residual
@@ -53,4 +53,3 @@ eval:
   response_threshold: 0.1
   displacement_threshold: 1.0
   radius_threshold: 8.0
-  alignment_variant: kabsch_all

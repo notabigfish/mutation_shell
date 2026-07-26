@@ -2,12 +2,12 @@ seed: 42
 paths:
   samples: data/processed/samples.pt
   splits: data/processed/splits_call.json
-  output_dir: outputs/call/esm_mlp
+  output_dir: outputs/call/base_v5_seed42
 data:
   knn_k: 32
   batch_size: 256
-  num_workers: 16
-  eval_num_workers: 16
+  num_workers: 8
+  eval_num_workers: 4
   prefetch_factor: 1
   eval_prefetch_factor: 1
   persistent_workers: true
@@ -16,17 +16,20 @@ data:
   max_nodes_per_batch: 22000
   eval_max_nodes_per_batch: 22000
   length_bucket_size: 256
-  edge_feature_version: base
-model_name: esm_mlp
+  edge_feature_version: v4
+model_name: base_v5
 model:
   esm_dim: 1280
   basic_dim: 57
-  hidden_dim: 256
+  edge_dim: 68
   esm_proj_dim: 128
+  hidden_dim: 256
+  num_layers: 6
   dropout: 0.1
+  num_classes: 3
 train:
   epochs: 80
-  lr: 0.0001
+  lr: 1.0e-4
   weight_decay: 1.0e-05
   patience: 50
   grad_clip: 0.5
@@ -36,18 +39,17 @@ train:
   save_total_limit: 5
 wandb:
   project_name: musrnet_call
-  run_name: esm_mlp
+  run_name: base_v5_seed42
   run_id: null
   resume_same_run: false
 loss:
   delta: 1.0
   w_perturbed: 0.3
   w_radius: 0.0
+  w_background: 0.02
   w_class: 0.0
-  use_log_disp: false
-  use_heteroscedastic_disp: false
-  use_radius_loss: false
-  use_class_loss: false
+  use_log_disp: true
+  use_heteroscedastic_disp: true
 eval:
   response_threshold: 0.1
   displacement_threshold: 1.0
