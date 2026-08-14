@@ -4,12 +4,13 @@ import argparse
 import json
 from pathlib import Path
 from typing import Any
-
-import numpy as np
+import sys
 import pandas as pd
-from scipy.stats import wilcoxon
-from sklearn.metrics import average_precision_score, f1_score, roc_auc_score
-from tqdm import tqdm
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+from musrnet.evaluation import compare_cluster_metric, summarize_predictions
 
 
 def parse_args() -> argparse.Namespace:
@@ -29,101 +30,6 @@ def parse_pred_arg(value: str) -> tuple[str, Path]:
     return name, Path(path)
 
 
-def safe_auroc(y_true: np.ndarray, y_score: np.ndarray) -> float:
-    if len(np.unique(y_true)) < 2:
-        return float("nan")
-    try:
-        return float(roc_auc_score(y_true, y_score))
-    except Exception:
-        return float("nan")
-
-
-def safe_auprc(y_true: np.ndarray, y_score: np.ndarray) -> float:
-    if len(np.unique(y_true)) < 2:
-        return float("nan")
-    try:
-        return float(average_precision_score(y_true, y_score))
-    except Exception:
-        return float("nan")
-
-
-def sample_metrics(df: pd.DataFrame) -> dict[str, float]:
-    abs_error = (df["pred_displacement"] - df["true_displacement"]).abs()
-    metrics = {
-        "global_mae": float(abs_error.mean()),
-        "perturbed_auroc": safe_auroc(df["true_perturbed"].to_numpy(), df["pred_perturbed_prob"].to_numpy()),
-        "perturbed_auprc": safe_auprc(df["true_perturbed"].to_numpy(), df["pred_perturbed_prob"].to_numpy()),
-        "derived_radius_mae": float((df["pred_radius"] - df["true_radius"]).abs().mean()),
-        "derived_class_macro_f1": float(f1_score(df["true_class"], df["pred_class"], average="macro")),
-    }
-    shell_values = []
-    for shell_idx in range(5):
-        shell_df = df[df["shell_id"] == shell_idx]
-        value = float((shell_df["pred_displacement"] - shell_df["true_displacement"]).abs().mean()) if not shell_df.empty else float("nan")
-        metrics[f"mae_shell_{shell_idx}"] = value
-        if not np.isnan(value):
-            shell_values.append(value)
-    metrics["shell_mae"] = float(np.mean(shell_values)) if shell_values else float("nan")
-    return metrics
-
-
-def summarize_predictions(df: pd.DataFrame) -> tuple[dict[str, float], pd.DataFrame]:
-    summary = sample_metrics(df)
-    sample_rows = []
-    for (cluster_id, sample_id), sample_df in tqdm(df.groupby(["cluster_id_30", "sample_id"], sort=False), total=df.groupby(["cluster_id_30", "sample_id"]).ngroups):
-        row = {"cluster_id_30": cluster_id, "sample_id": sample_id}
-        row.update(sample_metrics(sample_df))
-        sample_rows.append(row)
-    sample_metrics_df = pd.DataFrame(sample_rows)
-    cluster_metrics_df = sample_metrics_df.groupby("cluster_id_30", dropna=False).mean(numeric_only=True).reset_index()
-    summary["cluster_avg_global_mae"] = float(cluster_metrics_df["global_mae"].mean())
-    summary["cluster_avg_shell_mae"] = float(cluster_metrics_df["shell_mae"].mean())
-    summary["cluster_avg_auprc"] = float(cluster_metrics_df["perturbed_auprc"].mean())
-    summary["cluster_avg_radius_mae"] = float(cluster_metrics_df["derived_radius_mae"].mean())
-    summary["cluster_avg_class_macro_f1"] = float(cluster_metrics_df["derived_class_macro_f1"].mean())
-    return summary, cluster_metrics_df
-
-
-def compare_metric(candidate: pd.DataFrame, baseline: pd.DataFrame, metric: str, higher_is_better: bool, seed: int, n_bootstrap: int) -> dict[str, Any]:
-    merged = candidate[["cluster_id_30", metric]].merge(
-        baseline[["cluster_id_30", metric]],
-        on="cluster_id_30",
-        how="inner",
-        suffixes=("_candidate", "_baseline"),
-    )
-    diff = merged[f"{metric}_candidate"].to_numpy(dtype=float) - merged[f"{metric}_baseline"].to_numpy(dtype=float)
-    improved = diff > 0 if higher_is_better else diff < 0
-    valid = ~np.isnan(diff)
-    diff_valid = diff[valid]
-    improved_valid = improved[valid]
-    result = {
-        "n_common_clusters": int(valid.sum()),
-        "n_improved_clusters": int(improved_valid.sum()),
-        "n_worsened_clusters": int((~improved_valid).sum()),
-        "fraction_improved": float(improved_valid.mean()) if valid.sum() else float("nan"),
-        "mean_diff": float(np.nanmean(diff_valid)) if diff_valid.size else float("nan"),
-        "median_diff": float(np.nanmedian(diff_valid)) if diff_valid.size else float("nan"),
-        "bootstrap_95ci_low": float("nan"),
-        "bootstrap_95ci_high": float("nan"),
-        "wilcoxon_pvalue": float("nan"),
-    }
-    if diff_valid.size >= 1:
-        rng = np.random.default_rng(seed)
-        boot = []
-        for _ in range(n_bootstrap):
-            idx = rng.integers(0, diff_valid.size, size=diff_valid.size)
-            boot.append(float(np.nanmean(diff_valid[idx])))
-        ci = np.nanpercentile(np.asarray(boot, dtype=float), [2.5, 97.5])
-        result["bootstrap_95ci_low"] = float(ci[0])
-        result["bootstrap_95ci_high"] = float(ci[1])
-    if diff_valid.size >= 2 and not np.allclose(diff_valid, 0.0):
-        try:
-            result["wilcoxon_pvalue"] = float(wilcoxon(diff_valid).pvalue)
-        except Exception:
-            result["wilcoxon_pvalue"] = float("nan")
-    return result
-
-
 def main() -> None:
     args = parse_args()
     out_dir = Path(args.out_dir)
@@ -134,11 +40,9 @@ def main() -> None:
     cluster_frames: list[pd.DataFrame] = []
 
     for model_name, path in pred_paths.items():
-        df = pd.read_csv(path)
-        summary, cluster_df = summarize_predictions(df)
+        summary, _, cluster_df = summarize_predictions(pd.read_csv(path))
         summary["model_name"] = model_name
         summaries.append(summary)
-        cluster_df = cluster_df.copy()
         cluster_df.insert(0, "model_name", model_name)
         cluster_frames.append(cluster_df)
 
@@ -182,7 +86,14 @@ def main() -> None:
             merged_metric.insert(2, "metric", metric)
             merged_metric[diff_col] = merged_metric[f"{metric}_candidate"] - merged_metric[f"{metric}_baseline"]
             pairwise_rows.append(merged_metric)
-            stats = compare_metric(candidate_cluster, baseline_cluster, metric, higher_is_better, args.seed, args.n_bootstrap)
+            stats = compare_cluster_metric(
+                candidate_cluster,
+                baseline_cluster,
+                metric,
+                higher_is_better,
+                args.seed,
+                args.n_bootstrap,
+            )
             stats.update({"candidate": candidate, "baseline": baseline_name, "metric": metric, "direction": direction})
             stat_rows.append(stats)
 

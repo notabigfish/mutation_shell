@@ -7,9 +7,9 @@ import json
 import sys
 from pathlib import Path
 
+import pandas as pd
 import torch
 from safetensors.torch import load_file
-from torch_geometric.loader import DataLoader
 from tqdm import tqdm
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -18,7 +18,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from musrnet.dataset import MuSRNetDataset, create_or_load_splits, load_samples_manifest
 from musrnet.eval_utils import derive_radius_and_class_for_graph
-from musrnet.metrics import compute_metrics
+from musrnet.evaluation import summarize_predictions
 from musrnet.models import build_model
 from musrnet.train_utils import load_yaml
 from scripts.train import LengthBucketBatchSampler, make_pyg_loader
@@ -62,19 +62,8 @@ def load_checkpoint_state_dict(checkpoint_path: str | Path) -> dict[str, torch.T
 @torch.no_grad()
 def evaluate_split(model, loader, device, eval_cfg: dict):
     model.eval()
-    records = {
-        "true_disp": [],
-        "pred_disp": [],
-        "shell_id": [],
-        "true_perturbed": [],
-        "pred_perturbed_prob": [],
-        "true_radius": [],
-        "pred_radius": [],
-        "true_class": [],
-        "pred_class": [],
-        "cluster_id_30": [],
-    }
-    prediction_rows: list[dict[str, object]] = []
+    rows: list[dict[str, object]] = []
+
     with torch.inference_mode():
         with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=device.type == "cuda"):
             for batch in tqdm(loader, desc="Evaluating"):
@@ -83,9 +72,8 @@ def evaluate_split(model, loader, device, eval_cfg: dict):
                 probs = torch.sigmoid(outputs["perturbed_logit"]).detach().cpu()
                 disp = outputs["disp"].detach().cpu()
                 ptr = batch.ptr.detach().cpu().tolist()
-                sample_ids = list(batch.sample_id)
-                cluster_ids = list(batch.cluster_id_30)
                 radii = batch.radii.detach().cpu()
+
                 for graph_idx, (start, end) in enumerate(zip(ptr[:-1], ptr[1:])):
                     node_slice = slice(start, end)
                     pred_radius, pred_class = derive_radius_and_class_for_graph(
@@ -98,24 +86,15 @@ def evaluate_split(model, loader, device, eval_cfg: dict):
                     )
                     true_radius = float(batch.y_radius[graph_idx].detach().cpu().item())
                     true_class = int(batch.y_class[graph_idx].detach().cpu().item())
-                    nodes = end - start
-                    records["true_disp"].extend(batch.y_disp[node_slice].detach().cpu().tolist())
-                    records["pred_disp"].extend(disp[node_slice].tolist())
-                    records["shell_id"].extend(batch.shell_id[node_slice].detach().cpu().tolist())
-                    records["true_perturbed"].extend(batch.y_perturbed[node_slice].detach().cpu().tolist())
-                    records["pred_perturbed_prob"].extend(probs[node_slice].tolist())
-                    records["true_radius"].extend([true_radius] * nodes)
-                    records["pred_radius"].extend([pred_radius] * nodes)
-                    records["true_class"].extend([true_class] * nodes)
-                    records["pred_class"].extend([pred_class] * nodes)
-                    records["cluster_id_30"].extend([cluster_ids[graph_idx]] * nodes)
+                    sample_id = batch.sample_id[graph_idx]
+                    cluster_id = batch.cluster_id_30[graph_idx]
+
                     for residue_index in range(start, end):
-                        local_index = residue_index - start
-                        prediction_rows.append(
+                        rows.append(
                             {
-                                "sample_id": sample_ids[graph_idx],
-                                "cluster_id_30": cluster_ids[graph_idx],
-                                "residue_index": local_index,
+                                "sample_id": sample_id,
+                                "cluster_id_30": cluster_id,
+                                "residue_index": residue_index - start,
                                 "shell_id": int(batch.shell_id[residue_index].item()),
                                 "radii": float(batch.radii[residue_index].item()),
                                 "true_displacement": float(batch.y_disp[residue_index].item()),
@@ -128,7 +107,15 @@ def evaluate_split(model, loader, device, eval_cfg: dict):
                                 "pred_class": pred_class,
                             }
                         )
-    return compute_metrics(records), prediction_rows
+
+    pred_df = pd.DataFrame(rows)
+    metrics, sample_metrics, cluster_metrics = summarize_predictions(
+        pred_df,
+        response_threshold=float(eval_cfg.get("response_threshold", 0.5)),
+        displacement_threshold=float(eval_cfg.get("displacement_threshold", 1.0)),
+        radius_threshold=float(eval_cfg.get("radius_threshold", 8.0)),
+    )
+    return metrics, rows, sample_metrics, cluster_metrics
 
 def write_predictions(csv_path: Path, rows: list[dict[str, object]]) -> None:
     with csv_path.open("w", encoding="utf-8", newline="") as handle:
@@ -194,10 +181,12 @@ def main() -> None:
         prefetch_factor=int(config["data"].get("eval_prefetch_factor", 1)),
         persistent_workers=False,
         )
-        metrics, prediction_rows = evaluate_split(model, loader, device, config.get("eval", {}))
+        metrics, prediction_rows, sample_metrics, cluster_metrics = evaluate_split(model, loader, device, config.get("eval", {}))
         with (output_dir / f"eval_{split}.json").open("w", encoding="utf-8") as handle:
             json.dump(metrics, handle, indent=2)
         write_predictions(output_dir / f"predictions_{split}.csv", prediction_rows)
+        sample_metrics.to_csv(output_dir / f"sample_metrics_{split}.csv", index=False)
+        cluster_metrics.to_csv(output_dir / f"cluster_metrics_{split}.csv", index=False)
 
 
 if __name__ == "__main__":

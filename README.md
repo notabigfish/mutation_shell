@@ -164,6 +164,7 @@ do
       --pred geometry_gnn=outputs/call/geometry_gnn/predictions_test.csv \
       --pred coordinate_residual=outputs/call/coordinate_residual/predictions_test.csv \
       --candidate base_v5_seed${seed} \
+      --n-bootstrap 10000 \
       --out-dir outputs/call/strict_baseline_comparison_base_v5_seed${seed}
 done
 ```
@@ -308,7 +309,7 @@ do
   python scripts/build_alignment_sensitivity_data.py \
     --base-config configs/call/base_v5_seed$42.yaml \
     --variant ${variant} \
-    --out-config configs/call/base_v5_${vairant}.yaml \
+    --out-config configs/call/base_v5_${variant}.yaml \
     --subset call
 done
 ```

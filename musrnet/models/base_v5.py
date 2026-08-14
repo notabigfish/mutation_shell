@@ -18,9 +18,15 @@ class MuSRNet(nn.Module):
         num_layers: int = 6,
         dropout: float = 0.1,
         num_classes: int = 3,
+        response_mode: str = "background_excess",
+        use_mutation_context: bool = True,
     ) -> None:
         super().__init__()
         del num_classes
+        if response_mode not in {"background_excess", "pure_hurdle", "direct"}:
+            raise ValueError(response_mode)
+        self.response_mode = response_mode
+        self.use_mutation_context = use_mutation_context
         self.mutation_site_indicator_column = 20
         self.proj_wt = nn.Linear(esm_dim, esm_proj_dim)
         self.proj_delta = nn.Linear(esm_dim, esm_proj_dim)
@@ -91,7 +97,7 @@ class MuSRNet(nn.Module):
             dim=-1,
         )
         mutation_context = self.mutation_mlp(mutation_input)
-        if disable_mutation_context:
+        if disable_mutation_context or not self.use_mutation_context:
             mutation_context = torch.zeros_like(mutation_context)
         h = self.film(h, mutation_context[batch], radii)
 
@@ -100,15 +106,23 @@ class MuSRNet(nn.Module):
 
         perturbed_logit = self.pert_head(h).squeeze(-1)
         p = torch.sigmoid(perturbed_logit)
-        background = F.softplus(self.background_head(h)).squeeze(-1)
+        background_or_direct = F.softplus(self.background_head(h)).squeeze(-1)
         excess = F.softplus(self.excess_head(h)).squeeze(-1)
-        # disp = background + p * excess
-        disp = torch.clamp(background + p * excess, min=0.0, max=100.0)
-        disp_logvar = self.logvar_head(h).squeeze(-1).clamp(-2.0, 3.0)
-        return {
-            "disp": disp,
-            "background": background,
-            "excess": excess,
+
+        if self.response_mode == "background_excess":
+            disp = background_or_direct + p * excess
+        elif self.response_mode == "pure_hurdle":
+            disp = p * excess
+        else:
+            disp = background_or_direct
+
+        out = {
+            "disp": disp.clamp(0.0, 100.0),
             "perturbed_logit": perturbed_logit,
-            "disp_logvar": disp_logvar,
+            "disp_logvar": self.logvar_head(h).squeeze(-1).clamp(-2.0, 3.0),
         }
+        if self.response_mode == "background_excess":
+            out.update(background=background_or_direct, excess=excess)
+        elif self.response_mode == "pure_hurdle":
+            out["excess"] = excess
+        return out

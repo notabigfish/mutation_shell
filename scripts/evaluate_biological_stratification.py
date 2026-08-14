@@ -1,7 +1,3 @@
-"""
-python scripts/evaluate_biological_stratification.py --config configs/c1000/base_v5.yaml --pred MuSRNet=outputs/c1000/base_v5/predictions_test.csv --sample-csv data/SingleMutPairs2024_subset_c1000.csv --pdb-dir data/pdb --domain-annotations data/domain_annotations_subset_c1000.csv --out-dir outputs/c1000/base_v5/biological_stratification/ --num-workers 30 2>&1 | tee out.log
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -19,12 +15,12 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from musrnet.evaluation import compute_sample_metrics
 from musrnet.stratification import (
     HIGHER_IS_BETTER_METRICS,
     REQUIRED_SAMPLE_COLUMNS,
     build_biological_annotations,
     compute_pairwise_stratified_diffs,
-    compute_sample_metrics,
     compute_stratified_metrics,
     normalize_prediction_columns,
 )
@@ -142,6 +138,24 @@ def write_summary_csv(path: Path, rows: list[dict[str, object]]) -> None:
     df = pd.DataFrame(rows)
     df.to_csv(path, index=False)
 
+def add_fdr_columns(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
+    p = pd.to_numeric(df["wilcoxon_p"], errors="coerce").to_numpy(float)
+    q = np.full(len(df), np.nan)
+    valid = np.isfinite(p)
+    if valid.any():
+        pv = p[valid]
+        order = np.argsort(pv)
+        adj = pv[order] * len(pv) / np.arange(1, len(pv) + 1)
+        adj = np.minimum.accumulate(adj[::-1])[::-1].clip(max=1.0)
+        restored = np.empty_like(adj)
+        restored[order] = adj
+        q[valid] = restored
+    df["q_bh"] = q
+    improved = np.where(df["metric"].isin(HIGHER_IS_BETTER_METRICS), df["mean_diff"] > 0, df["mean_diff"] < 0)
+    ci_excludes_zero = (df["bootstrap_ci_high"] < 0) | (df["bootstrap_ci_low"] > 0)
+    df["claimable"] = (df["n_common_clusters"] >= 20) & (df["q_bh"] < 0.05) & ci_excludes_zero & improved
+    return df
 
 def make_wide_table(long_df: pd.DataFrame) -> pd.DataFrame:
     wide = long_df.pivot_table(
@@ -213,8 +227,8 @@ def determine_allosteric_status(
     if non_local.empty:
         return "do_not_claim_allosteric_improvement_class_not_assessed", "not_assessed"
 
-    shell4_improved = bool((shell4["mean_diff"] < 0).any()) if not shell4.empty else False
-    non_local_improved = bool((non_local["mean_diff"] > 0).any())
+    shell4_improved = bool(shell4["claimable"].any()) if not shell4.empty else False
+    non_local_improved = bool(non_local["claimable"].any())
     if shell4_improved and non_local_improved:
         return "limited_allosteric_claim_possible", "assessed"
     return "do_not_claim_allosteric_improvement", "assessed"
@@ -291,8 +305,6 @@ def main() -> None:
         "perturbed_auprc",
         "radius_mae",
         "class_correct",
-        "class_macro_f1",
-        "non_local_f1",
         "non_local_recall",
     ]
     available_metrics = [metric for metric in metric_columns if metric in sample_metrics_df.columns]
@@ -321,6 +333,7 @@ def main() -> None:
             seed=args.seed,
             warnings=warnings,
         )
+        pairwise_df = add_fdr_columns(pairwise_df)
         pairwise_df.to_csv(out_dir / "pairwise_stratified_diff.csv", index=False)
 
     figures_dir = out_dir / "figures"

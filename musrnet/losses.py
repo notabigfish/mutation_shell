@@ -10,6 +10,12 @@ def huber(values: torch.Tensor, delta: float) -> torch.Tensor:
     linear = abs_values - quadratic
     return 0.5 * quadratic**2 + delta * linear
 
+def reduce_residue_loss(per_residue, shell_id, batch, reduction):
+    if reduction == "global":
+        return per_residue.mean()
+    if reduction == "shell":
+        return shell_balanced_reduce(per_residue, shell_id, batch)
+    raise ValueError(f"Unknown reduction: {reduction}")
 
 def shell_balanced_reduce(per_residue: torch.Tensor, shell_id: torch.Tensor, batch: torch.Tensor) -> torch.Tensor:
     batch_size = int(batch.max().item()) + 1 if batch.numel() else 1
@@ -26,17 +32,6 @@ def shell_balanced_reduce(per_residue: torch.Tensor, shell_id: torch.Tensor, bat
     if not losses:
         return per_residue.new_tensor(0.0)
     return torch.stack(losses).mean()
-
-
-def shell_balanced_disp_loss(
-    pred: torch.Tensor,
-    target: torch.Tensor,
-    shell_id: torch.Tensor,
-    batch: torch.Tensor,
-    delta: float,
-) -> torch.Tensor:
-    return shell_balanced_reduce(huber(pred - target, delta), shell_id, batch)
-
 
 def _epoch_enabled_weight(base_weight: float, current_epoch: float, warmup: float, start_epoch: float | None) -> float:
     if start_epoch is None:
@@ -66,19 +61,21 @@ def compute_losses(
     use_coord_residual_loss: bool = False,
     use_radius_loss: bool = True,
     use_class_loss: bool = True,
+    reduction: str = "shell",
 ) -> dict[str, torch.Tensor]:
     if use_coord_residual_loss and "coord_residual" in outputs and hasattr(batch, "y_coord_residual"):
         per_residue = torch.linalg.norm(outputs["coord_residual"] - batch.y_coord_residual, dim=-1)
-        disp_loss = shell_balanced_reduce(per_residue, batch.shell_id, batch.batch)
+        disp_loss = reduce_residue_loss(per_residue, batch.shell_id, batch.batch, reduction)
     elif use_log_disp and use_heteroscedastic_disp and "disp_logvar" in outputs:
         target = torch.log1p(batch.y_disp)
         pred = torch.log1p(outputs["disp"])
         err2 = (pred - target) ** 2
         logvar = outputs["disp_logvar"]
         per_residue = 0.5 * torch.exp(-logvar) * err2 + 0.5 * logvar
-        disp_loss = shell_balanced_reduce(per_residue, batch.shell_id, batch.batch)
+        disp_loss = reduce_residue_loss(per_residue, batch.shell_id, batch.batch, reduction)
     else:
-        disp_loss = shell_balanced_disp_loss(outputs["disp"], batch.y_disp, batch.shell_id, batch.batch, delta)
+        per_residue = huber(outputs["disp"] - batch.y_disp, delta)
+        disp_loss = reduce_residue_loss(per_residue, batch.shell_id, batch.batch, reduction)
 
     pert_loss = F.binary_cross_entropy_with_logits(outputs["perturbed_logit"], batch.y_perturbed)
     background_penalty = outputs["background"].mean() if "background" in outputs else disp_loss.new_tensor(0.0)

@@ -13,6 +13,7 @@ from typing import Any
 
 import numpy as np
 import torch
+import pandas as pd
 from safetensors.torch import load_file
 from torch_geometric.data import Data
 from torch_geometric.loader import DataLoader
@@ -23,10 +24,11 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from musrnet.constants import AA_TO_INDEX, AMINO_ACIDS, RBF_CENTERS, RBF_SIGMA
-from musrnet.dataset import MuSRNetDataset, create_or_load_splits, load_samples_manifest
+from musrnet.dataset import MuSRNetDataset, create_or_load_splits, load_sample_from_manifest, load_samples_manifest
+from musrnet.esm_embed import ESMEmbedder
 from musrnet.eval_utils import derive_radius_and_class_for_graph
 from musrnet.graph import build_edge_attr_v1, build_edge_attr_v4, knn_edges
-from musrnet.metrics import compute_metrics
+from musrnet.evaluation import summarize_predictions
 from musrnet.models import build_model
 from musrnet.train_utils import load_yaml
 from scripts.train import LengthBucketBatchSampler, make_pyg_loader
@@ -62,7 +64,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--response-threshold", type=float, default=None)
     parser.add_argument("--displacement-threshold", type=float, default=None)
     parser.add_argument("--radius-threshold", type=float, default=None)
-    parser.add_argument("--mut-aa-esm-mode", choices=["reuse_delta", "negate_delta"], default="reuse_delta")
+    parser.add_argument("--one-per-cluster", action="store_true")
     return parser.parse_args()
 
 
@@ -100,6 +102,28 @@ def stable_int_hash(text: str) -> int:
     digest = hashlib.md5(text.encode("utf-8")).hexdigest()
     return int(digest[:8], 16)
 
+def select_one_per_cluster(manifest, sample_ids):
+    cluster_by_id = {str(x["sample_id"]): str(x["cluster_id_30"]) for x in manifest["metadata"]}
+    seen, kept = set(), []
+    for sid in sample_ids:
+        cluster = cluster_by_id[str(sid)]
+        if cluster not in seen:
+            seen.add(cluster); kept.append(sid)
+    return kept
+
+def precompute_fake_mutant_esm(manifest, sample_ids, seed, device):
+    embedder = ESMEmbedder(manifest.get("esm_model_name", "facebook/esm2_t33_650M_UR50D"), device)
+    cache = {}
+    for sid in tqdm(sample_ids, desc="Fake-mutant ESM"):
+        sample = load_sample_from_manifest(manifest, sid)
+        wt_aa, true_mut_aa = str(sample["wt_aa"]), str(sample["mut_aa"])
+        rng = random.Random(seed + stable_int_hash(str(sid)))
+        fake_aa = rng.choice([aa for aa in AMINO_ACIDS if aa not in {wt_aa, true_mut_aa}])
+        seq = list(sample["wt_sequence"]); seq[int(sample["mut_pos"])] = fake_aa
+        cache[str(sid)] = (fake_aa, embedder.embed_sequence("".join(seq)).half())
+    del embedder
+    if device.type == "cuda": torch.cuda.empty_cache()
+    return cache
 
 def clone_data(data: Data) -> Data:
     cloned = copy.copy(data)
@@ -171,26 +195,14 @@ def apply_shuffle_site(data: Data, *, seed: int, knn_k: int, edge_feature_versio
     return data
 
 
-def apply_shuffle_mutant_aa(data: Data, *, seed: int, mut_aa_esm_mode: str) -> Data:
+def apply_shuffle_mutant_aa(data: Data, fake_esm) -> Data:
     save_eval_fields(data)
-    wt_aa = str(data.wt_aa)
-    true_mut_aa = str(data.mut_aa)
-    rng = random.Random(seed + stable_int_hash(str(data.sample_id)))
-    candidates = [aa for aa in AMINO_ACIDS if aa != wt_aa and aa != true_mut_aa]
-    fake_mut_aa = rng.choice(candidates)
-
-    wt_vec = aa_one_hot(wt_aa)
-    fake_mut_vec = aa_one_hot(fake_mut_aa)
-    fake_mutation_vector = fake_mut_vec - wt_vec
-    data.x_basic[:, MUT_VEC_START:MUT_VEC_END] = fake_mutation_vector[None, :]
-
-    if mut_aa_esm_mode == "negate_delta":
-        data.esm_delta = -data.esm_delta
-    elif mut_aa_esm_mode == "reuse_delta":
-        pass
-    else:
-        raise ValueError(mut_aa_esm_mode)
-
+    wt_aa, true_mut_aa = str(data.wt_aa), str(data.mut_aa)
+    fake_mut_aa, fake_embedding = fake_esm[str(data.sample_id)]
+    data.x_basic[:, MUT_VEC_START:MUT_VEC_END] = (aa_one_hot(fake_mut_aa) - aa_one_hot(wt_aa))[None, :]
+    data.esm_delta = fake_embedding.float() - data.esm_wt
+    data.mut_aa = fake_mut_aa
+    data.mutation_key = f"{wt_aa}->{fake_mut_aa}"
     data.counterfactual_true_mut_aa = true_mut_aa
     data.counterfactual_fake_mut_aa = fake_mut_aa
     return data
@@ -214,8 +226,15 @@ def apply_reverse_mutation(data: Data) -> Data:
     wt_vec = aa_one_hot(wt_aa)
     mut_vec = aa_one_hot(mut_aa)
     reverse_vector = wt_vec - mut_vec
-    data.x_basic[:, MUT_VEC_START:MUT_VEC_END] = reverse_vector[None, :]
-    data.esm_delta = -data.esm_delta
+    old_wt_esm = data.esm_wt.clone()
+    old_mut_esm = old_wt_esm + data.esm_delta
+    p = int(data.mut_pos.view(-1)[0])
+
+    data.esm_wt = old_mut_esm
+    data.esm_delta = old_wt_esm - old_mut_esm
+    data.x_basic[p, AA_START:AA_END] = aa_one_hot(mut_aa)
+    data.x_basic[:, MUT_VEC_START:MUT_VEC_END] = (aa_one_hot(wt_aa) - aa_one_hot(mut_aa))[None, :]
+    data.wt_aa, data.mut_aa = mut_aa, wt_aa
     data.counterfactual_reverse_key = f"{mut_aa}->{wt_aa}"
     return data
 
@@ -226,24 +245,13 @@ def apply_remove_mutation_context(data: Data) -> Data:
 
 
 class CounterfactualDataset(torch.utils.data.Dataset):
-    def __init__(
-        self,
-        base_dataset,
-        variant: str,
-        seed: int,
-        knn_k: int,
-        edge_feature_version: str,
-        mut_aa_esm_mode: str,
-    ) -> None:
+    def __init__(self, base_dataset, variant: str, seed: int, knn_k: int, edge_feature_version: str, fake_esm) -> None:
         self.base_dataset = base_dataset
         self.variant = variant
         self.seed = seed
         self.knn_k = knn_k
         self.edge_feature_version = edge_feature_version
-        self.mut_aa_esm_mode = mut_aa_esm_mode
-
-        self.manifest = base_dataset.manifest
-        self.sample_ids = base_dataset.sample_ids
+        self.fake_esm = fake_esm
 
     def __len__(self):
         return len(self.base_dataset)
@@ -256,7 +264,7 @@ class CounterfactualDataset(torch.utils.data.Dataset):
         if self.variant == "shuffle_site":
             return apply_shuffle_site(data, seed=self.seed, knn_k=self.knn_k, edge_feature_version=self.edge_feature_version)
         if self.variant == "shuffle_mutant_aa":
-            return apply_shuffle_mutant_aa(data, seed=self.seed, mut_aa_esm_mode=self.mut_aa_esm_mode)
+            return apply_shuffle_mutant_aa(data, self.fake_esm)
         if self.variant == "wt_wt_negative":
             return apply_wt_wt_negative(data)
         if self.variant == "reverse_mutation":
@@ -288,18 +296,6 @@ def forward_model(model, batch, *, disable_mutation_context: bool = False):
 @torch.no_grad()
 def evaluate_counterfactual_variant(model, loader, device, eval_cfg, variant: str):
     model.eval()
-    records = {
-        "true_disp": [],
-        "pred_disp": [],
-        "shell_id": [],
-        "true_perturbed": [],
-        "pred_perturbed_prob": [],
-        "true_radius": [],
-        "pred_radius": [],
-        "true_class": [],
-        "pred_class": [],
-        "cluster_id_30": [],
-    }
     prediction_rows: list[dict[str, object]] = []
     graph_pred_classes: list[int] = []
     disable_mutation_context = variant == "remove_mutation_context"
@@ -337,17 +333,6 @@ def evaluate_counterfactual_variant(model, loader, device, eval_cfg, variant: st
 
                     graph_true_radius = float(true_radius[graph_idx].item())
                     graph_true_class = int(true_class[graph_idx].item())
-                    nodes = end - start
-                    records["true_disp"].extend(true_disp[node_slice].tolist())
-                    records["pred_disp"].extend(disp[node_slice].tolist())
-                    records["shell_id"].extend(metric_shell_id[node_slice].tolist())
-                    records["true_perturbed"].extend(true_perturbed[node_slice].tolist())
-                    records["pred_perturbed_prob"].extend(probs[node_slice].tolist())
-                    records["true_radius"].extend([graph_true_radius] * nodes)
-                    records["pred_radius"].extend([pred_radius] * nodes)
-                    records["true_class"].extend([graph_true_class] * nodes)
-                    records["pred_class"].extend([pred_class] * nodes)
-                    records["cluster_id_30"].extend([cluster_ids[graph_idx]] * nodes)
 
                     for residue_index in range(start, end):
                         local_index = residue_index - start
@@ -370,12 +355,16 @@ def evaluate_counterfactual_variant(model, loader, device, eval_cfg, variant: st
                             }
                         )
 
-    metrics = compute_metrics(records)
-    pred_disp_np = np.asarray(records["pred_disp"], dtype=np.float32)
-    pred_prob_np = np.asarray(records["pred_perturbed_prob"], dtype=np.float32)
-    pred_score_np = pred_disp_np * pred_prob_np
-    response_threshold = float(eval_cfg.get("response_threshold", 0.5))
-    pred_perturbed_mask = pred_score_np > response_threshold
+    pred_df = pd.DataFrame(prediction_rows)
+    metrics, sample_metrics, cluster_metrics = summarize_predictions(
+        pred_df,
+        response_threshold=float(eval_cfg.get("response_threshold", 0.5)),
+        displacement_threshold=float(eval_cfg.get("displacement_threshold", 1.0)),
+        radius_threshold=float(eval_cfg.get("radius_threshold", 8.0)),
+    )
+    pred_disp_np = pred_df["pred_displacement"].to_numpy(dtype=np.float32)
+    pred_prob_np = pred_df["pred_perturbed_prob"].to_numpy(dtype=np.float32)
+    pred_perturbed_mask = pred_disp_np * pred_prob_np > float(eval_cfg.get("response_threshold", 0.5))
 
     metrics["mean_pred_displacement"] = float(np.mean(pred_disp_np)) if pred_disp_np.size else float("nan")
     metrics["max_pred_displacement"] = float(np.max(pred_disp_np)) if pred_disp_np.size else float("nan")
@@ -393,7 +382,7 @@ def evaluate_counterfactual_variant(model, loader, device, eval_cfg, variant: st
             metrics[f"pred_class_{class_idx}_rate"] = float("nan")
         metrics["silent_prediction_rate"] = float("nan")
 
-    return metrics, prediction_rows
+    return metrics, prediction_rows, sample_metrics, cluster_metrics
 
 
 def write_predictions(csv_path: Path, rows: list[dict[str, object]]) -> None:
@@ -487,25 +476,20 @@ def main() -> None:
     if args.radius_threshold is not None:
         eval_cfg["radius_threshold"] = args.radius_threshold
 
-    if args.mut_aa_esm_mode == "reuse_delta":
-        print(
-            "WARNING: shuffle_mutant_aa corrupts explicit mutation vector only unless --mut-aa-esm-mode negate_delta is used. "
-            "It does not recompute ESM embeddings."
-        )
-
-    model = build_model(config["model_name"], config["model"])
-    model.load_state_dict(load_checkpoint_state_dict(args.checkpoint))
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.to(device)
-    model.eval()
-
     manifest = load_samples_manifest(config["paths"]["samples"])
     cluster_pkl_path = PROJECT_ROOT / "data" / "SingleMutPairs2024_cluster30.pkl"
     splits = create_or_load_splits(manifest, config["paths"]["splits"], cluster_pkl_path, config["seed"])
     edge_feature_version = config["data"].get("edge_feature_version", "v1")
     dataset = MuSRNetDataset(manifest, splits[args.split], config["data"]["knn_k"], edge_feature_version=edge_feature_version)
-    if args.max_samples is not None:
-        dataset.sample_ids = dataset.sample_ids[: args.max_samples]
+    if args.one_per_cluster: dataset.sample_ids = select_one_per_cluster(manifest, dataset.sample_ids)
+    if args.max_samples is not None: dataset.sample_ids = dataset.sample_ids[:args.max_samples]
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    fake_esm = precompute_fake_mutant_esm(manifest, dataset.sample_ids, args.seed, device)
+
+    model = build_model(config["model_name"], config["model"])
+    model.load_state_dict(load_checkpoint_state_dict(args.checkpoint))
+    model.to(device).eval()
 
     batch_size = args.batch_size or config["data"]["batch_size"]
     num_workers = args.num_workers if args.num_workers is not None else config["data"]["num_workers"]
@@ -520,7 +504,7 @@ def main() -> None:
             seed=args.seed,
             knn_k=config["data"]["knn_k"],
             edge_feature_version=edge_feature_version,
-            mut_aa_esm_mode=args.mut_aa_esm_mode,
+            fake_esm=fake_esm,
         )
         max_nodes_per_batch = int(config["data"].get("eval_max_nodes_per_batch", config["data"].get("max_nodes_per_batch", 0)))
         if max_nodes_per_batch > 0:
@@ -543,18 +527,19 @@ def main() -> None:
             )
         else:
             loader = DataLoader(cf_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
-        metrics, prediction_rows = evaluate_counterfactual_variant(model, loader, device, eval_cfg, variant)
+        metrics, prediction_rows, sample_metrics, cluster_metrics = evaluate_counterfactual_variant(model, loader, device, eval_cfg, variant)
         variant_metrics[variant] = metrics
 
         with (out_dir / f"metrics_{variant}.json").open("w", encoding="utf-8") as handle:
             json.dump(metrics, handle, indent=2)
         write_predictions(out_dir / f"predictions_{variant}.csv", prediction_rows)
+        sample_metrics.to_csv(out_dir / f"sample_metrics_{variant}.csv", index=False)
+        cluster_metrics.to_csv(out_dir / f"cluster_metrics_{variant}.csv", index=False)
 
     summary_rows = build_summary_rows(variant_metrics)
     summary_payload = {
         "split": args.split,
         "seed": args.seed,
-        "mut_aa_esm_mode": args.mut_aa_esm_mode,
         "variants": VARIANTS,
         "metrics_by_variant": variant_metrics,
         "summary_rows": summary_rows,

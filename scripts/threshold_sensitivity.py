@@ -26,10 +26,10 @@ def derive_per_sample(
     true_disp = sample_df["true_displacement"].to_numpy(dtype=np.float64)
     radii = sample_df["radii"].to_numpy(dtype=np.float64)
 
-    true_radius = float(sample_df["true_radius"].iloc[0])
+    true_mask = true_disp > displacement_threshold
+    true_radius = float(radii[true_mask].max()) if true_mask.any() else 0.0
 
-    score = pred_prob * pred_disp
-    pred_mask = score > response_threshold
+    pred_mask = pred_prob > response_threshold
 
     if pred_mask.any():
         pred_radius = float(radii[pred_mask].max())

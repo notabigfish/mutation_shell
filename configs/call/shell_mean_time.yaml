@@ -1,0 +1,13 @@
+seed: 42
+paths:
+  samples: data/processed/samples.pt
+  splits: data/processed/splits_time_call_2023_2024_2025.json
+  output_dir: outputs/call/shell_mean_time
+model_name: shell_mean
+model: {}
+baseline:
+  type: shell_mean
+eval:
+  response_threshold: 0.1
+  displacement_threshold: 1.0
+  radius_threshold: 8.0
