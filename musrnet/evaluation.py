@@ -5,6 +5,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 from scipy.stats import wilcoxon
+from tqdm.auto import tqdm
 from sklearn.metrics import average_precision_score, f1_score, roc_auc_score
 
 SHELL_IDS = (0, 1, 2, 3, 4)
@@ -128,7 +129,8 @@ def compute_sample_metrics(
     warnings = warnings if warnings is not None else []
     rows: list[dict[str, Any]] = []
 
-    for (cluster_id, sample_id), sample_df in df.groupby(["cluster_id_30", "sample_id"], sort=False, observed=True):
+    grouped = df.groupby(["cluster_id_30", "sample_id"], sort=False, observed=True)
+    for (cluster_id, sample_id), sample_df in tqdm(grouped, total=grouped.ngroups, desc="Samples", leave=False):
         errors = np.abs(
             sample_df["pred_displacement"].to_numpy(dtype=np.float64)
             - sample_df["true_displacement"].to_numpy(dtype=np.float64)
@@ -315,7 +317,7 @@ def compare_cluster_metric(
     if diff.size:
         rng = np.random.default_rng(seed)
         bootstrap = np.empty(n_bootstrap, dtype=np.float64)
-        for i in range(n_bootstrap):
+        for i in tqdm(range(n_bootstrap), desc=f"Bootstrap {metric}", leave=False):
             bootstrap[i] = diff[rng.integers(0, diff.size, diff.size)].mean()
         result["bootstrap_95ci_low"], result["bootstrap_95ci_high"] = map(
             float, np.percentile(bootstrap, [2.5, 97.5])

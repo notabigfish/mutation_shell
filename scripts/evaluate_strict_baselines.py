@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 import sys
 import pandas as pd
+from tqdm.auto import tqdm
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -39,7 +40,9 @@ def main() -> None:
     summaries = []
     cluster_frames: list[pd.DataFrame] = []
 
-    for model_name, path in pred_paths.items():
+    model_bar = tqdm(pred_paths.items(), total=len(pred_paths), desc="Models")
+    for model_name, path in model_bar:
+        model_bar.set_postfix_str(model_name)
         summary, _, cluster_df = summarize_predictions(pd.read_csv(path))
         summary["model_name"] = model_name
         summaries.append(summary)
@@ -73,29 +76,23 @@ def main() -> None:
     pairwise_rows = []
     stat_rows = []
     candidate_cluster = cluster_metrics_df[cluster_metrics_df["model_name"] == candidate]
-    for baseline_name in baselines:
+    metrics = ["global_mae", "shell_mae", "perturbed_auprc", "derived_radius_mae", "derived_class_macro_f1"]
+    tests = [(baseline, metric) for baseline in baselines for metric in metrics]
+    for baseline_name, metric in tqdm(tests, desc="Statistical tests"):
         baseline_cluster = cluster_metrics_df[cluster_metrics_df["model_name"] == baseline_name]
         merged = candidate_cluster.merge(baseline_cluster, on="cluster_id_30", suffixes=("_candidate", "_baseline"))
-        for metric in ["global_mae", "shell_mae", "perturbed_auprc", "derived_radius_mae", "derived_class_macro_f1"]:
-            direction = "higher" if metric in {"perturbed_auprc", "derived_class_macro_f1"} else "lower"
-            higher_is_better = direction == "higher"
-            diff_col = f"{metric}_diff"
-            merged_metric = merged[["cluster_id_30", f"{metric}_candidate", f"{metric}_baseline"]].copy()
-            merged_metric.insert(0, "candidate", candidate)
-            merged_metric.insert(1, "baseline", baseline_name)
-            merged_metric.insert(2, "metric", metric)
-            merged_metric[diff_col] = merged_metric[f"{metric}_candidate"] - merged_metric[f"{metric}_baseline"]
-            pairwise_rows.append(merged_metric)
-            stats = compare_cluster_metric(
-                candidate_cluster,
-                baseline_cluster,
-                metric,
-                higher_is_better,
-                args.seed,
-                args.n_bootstrap,
-            )
-            stats.update({"candidate": candidate, "baseline": baseline_name, "metric": metric, "direction": direction})
-            stat_rows.append(stats)
+        direction = "higher" if metric in {"perturbed_auprc", "derived_class_macro_f1"} else "lower"
+        higher_is_better = direction == "higher"
+        diff_col = f"{metric}_diff"
+        merged_metric = merged[["cluster_id_30", f"{metric}_candidate", f"{metric}_baseline"]].copy()
+        merged_metric.insert(0, "candidate", candidate)
+        merged_metric.insert(1, "baseline", baseline_name)
+        merged_metric.insert(2, "metric", metric)
+        merged_metric[diff_col] = merged_metric[f"{metric}_candidate"] - merged_metric[f"{metric}_baseline"]
+        pairwise_rows.append(merged_metric)
+        stats = compare_cluster_metric(candidate_cluster, baseline_cluster, metric, higher_is_better, args.seed, args.n_bootstrap)
+        stats.update({"candidate": candidate, "baseline": baseline_name, "metric": metric, "direction": direction})
+        stat_rows.append(stats)
 
     pairwise_cluster_diffs = pd.concat(pairwise_rows, ignore_index=True) if pairwise_rows else pd.DataFrame()
     pairwise_cluster_diffs.to_csv(out_dir / "pairwise_cluster_diffs.csv", index=False)

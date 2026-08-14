@@ -2,7 +2,7 @@
 1. 统一 cluster metrics
 
 ```bash
-[running]for seed in 42 101 668
+[done]for seed in 42 101 668
 do
   python scripts/evaluate_strict_baselines.py \
       --pred base_v5_seed${seed}=outputs/call/base_v5_seed${seed}/predictions_test.csv \
@@ -76,7 +76,7 @@ python scripts/evaluate_strict_baselines.py \
 五、修正反事实实验
 
 ```bash
-for s in 0 1 2 3 4 5 6 7 8 9
+[running] for s in 0 1 2 3 4 5 6 7 8 9
 do
   python scripts/counterfactual_tests.py \
     --config configs/call/base_v5_seed42.yaml \
