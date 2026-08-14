@@ -13,4 +13,5 @@ source ~/.bashrc
 conda activate pt311cu130
 cd /rds/projects/l/liuje-multiai/shuo/mutation/MuSRNet
 
-python scripts/train.py --config configs/call/base_v5_seed101.yaml --resume-wandb 08mmlr3y --resume-from-checkpoint  outputs/call/base_v5_seed101/checkpoint-94713/ 
+python scripts/train.py --config configs/call/base_v5_seed101.yaml --resume-wandb 08mmlr3y --resume-from-checkpoint  outputs/call/base_v5_seed101/checkpoint-147429/ 
+

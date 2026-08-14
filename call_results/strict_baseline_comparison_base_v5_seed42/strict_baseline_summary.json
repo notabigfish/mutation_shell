@@ -1,0 +1,35 @@
+{
+  "candidate": "base_v5_seed42",
+  "baselines": [
+    "zero_response",
+    "global_mean",
+    "shell_mean",
+    "mutation_type_shell_mean",
+    "esm_mlp",
+    "geometry_gnn",
+    "coordinate_residual"
+  ],
+  "main_claim_passed": true,
+  "cluster_claim_passed": true,
+  "criterion": {
+    "shell_mae": "base_v5 lower than all strict baselines",
+    "perturbed_auprc": "base_v5 higher than all strict baselines"
+  },
+  "best_model_by_metric": {
+    "global_mae": "base_v5_seed42",
+    "shell_mae": "base_v5_seed42",
+    "cluster_avg_shell_mae": "base_v5_seed42",
+    "mae_shell_0": "base_v5_seed42",
+    "mae_shell_1": "base_v5_seed42",
+    "mae_shell_2": "base_v5_seed42",
+    "mae_shell_3": "base_v5_seed42",
+    "mae_shell_4": "base_v5_seed42",
+    "perturbed_auroc": "base_v5_seed42",
+    "perturbed_auprc": "base_v5_seed42",
+    "cluster_avg_auprc": "base_v5_seed42",
+    "derived_radius_mae": "esm_mlp",
+    "derived_class_macro_f1": "esm_mlp",
+    "cluster_avg_radius_mae": "esm_mlp",
+    "cluster_avg_class_macro_f1": "shell_mean"
+  }
+}

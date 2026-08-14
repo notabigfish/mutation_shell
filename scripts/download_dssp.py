@@ -8,21 +8,26 @@ from tqdm import tqdm
 from requests.adapters import HTTPAdapter
 import time
 import random
+import argparse
 
-OUTPUT_DIR = "/rds/projects/l/liuje-multiai/shuo/mutation/MuSRNet/data/dssp_downloads/"
-MAX_WORKERS = 8
 TIMEOUT = (5, 20)
 RETRIES = 3
 
-data = pd.read_csv('/rds/homes/s/sxz325/shuo/mutation/MuSRNet/data/SingleMutPairs2024_subset_c1000.csv')
+argument_parser = argparse.ArgumentParser(description="Download DSSP files for PDB IDs.")
+argument_parser.add_argument("--output_dir", type=str, default="/rds/projects/l/liuje-multiai/shuo/mutation/MuSRNet/data/dssp_downloads/", help="Directory to save downloaded DSSP files.")
+argument_parser.add_argument("--max_workers", type=int, default=8, help="Maximum number of concurrent download workers.")
+argument_parser.add_argument("--input_csv", type=str, default="/rds/homes/s/sxz325/shuo/mutation/MuSRNet/data/SingleMutPairs2024.csv", help="Input CSV file containing PDB IDs.")
+args = argument_parser.parse_args()
+
+data = pd.read_csv(args.input_csv)
 pdb_ids = list(set(data['wt_pdb_id'].dropna().unique().tolist() + data['mut_pdb_id'].dropna().unique().tolist()))
-downloaded_dssps = glob.glob(os.path.join(OUTPUT_DIR, '*.dssp'))
+downloaded_dssps = glob.glob(os.path.join(args.output_dir, '*.dssp'))
 downloaded_dssps = [os.path.basename(f).split('.')[0] for f in downloaded_dssps]
 remaining_ids = [f for f in pdb_ids if f not in downloaded_dssps]
 
 def download_file(pdb_id):
     pdb_id = str(pdb_id).strip().lower()
-    file_path = os.path.join(OUTPUT_DIR, f"{pdb_id}.dssp")
+    file_path = os.path.join(args.output_dir, f"{pdb_id}.dssp")
 
     urls = [
         f"https://pdb-redo.eu/dssp/db/{pdb_id}/legacy",
@@ -64,7 +69,7 @@ def download_file(pdb_id):
 total_tasks = len(remaining_ids)
 	
 success_count = 0
-with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+with ThreadPoolExecutor(max_workers=args.max_workers) as executor:
 	future_to_id = {executor.submit(download_file, pid): pid for pid in remaining_ids}
 	
 	for future in tqdm(as_completed(future_to_id), total=total_tasks, desc="Downloading", unit="file"):

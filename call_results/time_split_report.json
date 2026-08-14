@@ -1,0 +1,118 @@
+{
+  "config": "configs/call/base_v5_time.yaml",
+  "split_rule": {
+    "train": "cluster_year <= 2023",
+    "valid": "cluster_year == 2024",
+    "test": "cluster_year >= 2025",
+    "cluster_policy": "latest_release"
+  },
+  "n_samples": {
+    "train": 275190,
+    "valid": 119760,
+    "test": 340420
+  },
+  "n_clusters": {
+    "train": 1870,
+    "valid": 175,
+    "test": 159
+  },
+  "sample_year_range": {
+    "train": [
+      1990,
+      2023
+    ],
+    "valid": [
+      1994,
+      2024
+    ],
+    "test": [
+      1992,
+      2026
+    ]
+  },
+  "cluster_year_range": {
+    "train": [
+      1992,
+      2023
+    ],
+    "valid": [
+      2024,
+      2024
+    ],
+    "test": [
+      2025,
+      2026
+    ]
+  },
+  "metrics": {
+    "train": {
+      "global_mae": 0.7122812867164612,
+      "perturbed_auroc": 0.924580865919165,
+      "perturbed_auprc": 0.6962601007263769,
+      "radius_mae": 11.253100395202637,
+      "derived_radius_mae": 11.253100395202637,
+      "class_macro_f1": 0.3627268314808451,
+      "derived_class_macro_f1": 0.3627268314808451,
+      "mae_shell_0": 0.5810091495513916,
+      "mae_shell_1": 0.4479965269565582,
+      "mae_shell_2": 0.40748053789138794,
+      "mae_shell_3": 0.3898865878582001,
+      "mae_shell_4": 0.7889758944511414,
+      "shell_mae": 0.5230697393417358,
+      "cluster_avg_shell_mae": 0.5125782800133135,
+      "cluster_avg_global_mae": 0.5037004607764476,
+      "cluster_avg_auprc": 0.2877651601419679,
+      "cluster_avg_radius_mae": 15.113112370684908,
+      "cluster_avg_class_macro_f1": 0.4214507992697468
+    },
+    "valid": {
+      "global_mae": 0.29735255241394043,
+      "perturbed_auroc": 0.7768637853749294,
+      "perturbed_auprc": 0.26518814496326043,
+      "radius_mae": 17.1302490234375,
+      "derived_radius_mae": 17.1302490234375,
+      "class_macro_f1": 0.2782587641883713,
+      "derived_class_macro_f1": 0.2782587641883713,
+      "mae_shell_0": 0.47711890935897827,
+      "mae_shell_1": 0.3310275673866272,
+      "mae_shell_2": 0.3028166592121124,
+      "mae_shell_3": 0.2775643765926361,
+      "mae_shell_4": 0.29539769887924194,
+      "shell_mae": 0.3367850422859192,
+      "cluster_avg_shell_mae": 0.6580247787748064,
+      "cluster_avg_global_mae": 0.6106563932555062,
+      "cluster_avg_auprc": 0.28420671825187616,
+      "cluster_avg_radius_mae": 13.392790236590164,
+      "cluster_avg_class_macro_f1": 0.38753764524275847
+    },
+    "test": {
+      "global_mae": 0.39493462443351746,
+      "perturbed_auroc": 0.6774117207982768,
+      "perturbed_auprc": 0.22422014144317376,
+      "radius_mae": 21.061216354370117,
+      "derived_radius_mae": 21.061216354370117,
+      "class_macro_f1": 0.3110814866675546,
+      "derived_class_macro_f1": 0.3110814866675546,
+      "mae_shell_0": 0.7004727721214294,
+      "mae_shell_1": 0.4095650613307953,
+      "mae_shell_2": 0.3447229266166687,
+      "mae_shell_3": 0.322245717048645,
+      "mae_shell_4": 0.40745115280151367,
+      "shell_mae": 0.4368915259838104,
+      "cluster_avg_shell_mae": 0.6603509933271873,
+      "cluster_avg_global_mae": 0.6534749228718146,
+      "cluster_avg_auprc": 0.2891981133730429,
+      "cluster_avg_radius_mae": 12.532307414045125,
+      "cluster_avg_class_macro_f1": 0.4139263833057332
+    }
+  },
+  "generalization_gap": {
+    "valid_shell_mae_minus_train_shell_mae": -0.18628469705581663,
+    "test_shell_mae_minus_train_shell_mae": -0.08617821335792542,
+    "test_shell_mae_minus_valid_shell_mae": 0.10010648369789121
+  },
+  "detection_gap": {
+    "test_auprc_minus_valid_auprc": -0.04096800352008667
+  },
+  "scientific_question": "Does MuSRNet trained on release_date <= 2022 generalize to 2024-or-later paired WT-mutant structures?"
+}

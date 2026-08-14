@@ -28,6 +28,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--config", required=True)
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--splits", default="test", help="Comma-separated split names, e.g. train,valid,test")
+    parser.add_argument("--output-dir", default=None, help="Override evaluation output directory")
     return parser.parse_args()
 
 
@@ -164,7 +165,7 @@ def main() -> None:
     manifest = load_samples_manifest(config["paths"]["samples"])
     cluster_pkl_path = PROJECT_ROOT / "data" / "SingleMutPairs2024_cluster30.pkl"
     splits = create_or_load_splits(manifest, config["paths"]["splits"], cluster_pkl_path, config["seed"])
-    output_dir = Path(config["paths"]["output_dir"])
+    output_dir = Path(args.output_dir or config["paths"]["output_dir"])
     output_dir.mkdir(parents=True, exist_ok=True)
     edge_feature_version = config["data"].get("edge_feature_version", "v1")
 

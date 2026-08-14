@@ -135,10 +135,10 @@ def build_variant(base_config_path: Path, variant: str, out_config_path: Path | 
     base_config = load_yaml(base_config_path)
     base_manifest = load_samples_manifest(PROJECT_ROOT / base_config["paths"]["samples"])
 
-    data_dir = PROJECT_ROOT / "data" / "alignment_sensitivity" / args.subset / variant
+    data_dir = PROJECT_ROOT / "data" / "alignment_sensitivity" / subset / variant
     sample_dir = data_dir / "samples"
     manifest_path = data_dir / "samples_manifest.json"
-    results_dir = PROJECT_ROOT / "outputs" / args.subset / "alignment_sensitivity" / variant
+    results_dir = PROJECT_ROOT / "outputs" / subset / "alignment_sensitivity" / variant
     sample_dir.mkdir(parents=True, exist_ok=True)
     results_dir.mkdir(parents=True, exist_ok=True)
 
