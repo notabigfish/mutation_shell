@@ -509,7 +509,7 @@ def main() -> None:
         max_nodes_per_batch = int(config["data"].get("eval_max_nodes_per_batch", config["data"].get("max_nodes_per_batch", 0)))
         if max_nodes_per_batch > 0:
             batch_sampler = LengthBucketBatchSampler(
-                dataset=cf_dataset,
+                dataset=dataset,
                 max_nodes_per_batch=max_nodes_per_batch,
                 bucket_size=int(config["data"].get("length_bucket_size", 256)),
                 shuffle=False,
