@@ -105,20 +105,20 @@ for name, patch in runs.items():
     Path(f"configs/call/{name}.yaml").write_text(yaml.safe_dump(c, sort_keys=False))
 PY
 
-[running] python scripts/train.py --config configs/call/base_v5_pure_hurdle_seed42.yaml
-python scripts/evaluate.py --config configs/call/base_v5_pure_hurdle_seed42.yaml --checkpoint outputs/call/base_v5_pure_hurdle_seed42/best/model.safetensors --splits test
+[done] python scripts/train.py --config configs/call/base_v5_pure_hurdle_seed42.yaml
+[done] python scripts/evaluate.py --config configs/call/base_v5_pure_hurdle_seed42.yaml --checkpoint outputs/call/base_v5_pure_hurdle_seed42/best/model.safetensors --splits test
 
-[running] python scripts/train.py --config configs/call/base_v5_direct_seed42.yaml
-python scripts/evaluate.py --config configs/call/base_v5_direct_seed42.yaml --checkpoint outputs/call/base_v5_direct_seed42/best/model.safetensors --splits test
+[done] python scripts/train.py --config configs/call/base_v5_direct_seed42.yaml
+[done] python scripts/evaluate.py --config configs/call/base_v5_direct_seed42.yaml --checkpoint outputs/call/base_v5_direct_seed42/best/model.safetensors --splits test
 
-[running] python scripts/train.py --config configs/call/base_v5_global_loss_seed42.yaml
-python scripts/evaluate.py --config configs/call/base_v5_global_loss_seed42.yaml --checkpoint outputs/call/base_v5_global_loss_seed42/best/model.safetensors --splits test
+[done] python scripts/train.py --config configs/call/base_v5_global_loss_seed42.yaml
+[done] python scripts/evaluate.py --config configs/call/base_v5_global_loss_seed42.yaml --checkpoint outputs/call/base_v5_global_loss_seed42/best/model.safetensors --splits test
 
 ```
 
 然后比较：
 ```bash
-python scripts/evaluate_strict_baselines.py \
+[done] python scripts/evaluate_strict_baselines.py \
   --pred full=outputs/call/base_v5_seed42/predictions_test.csv \
   --pred pure_hurdle=outputs/call/base_v5_pure_hurdle_seed42/predictions_test.csv \
   --pred direct=outputs/call/base_v5_direct_seed42/predictions_test.csv \
