@@ -1,0 +1,1404 @@
+outputs/call/
+├── alignment_sensitivity
+│   ├── cluster_compare_ref_base_v5_seed101
+│   │   ├── cluster_metrics_wide.csv
+│   │   ├── pairwise_cluster_diff.csv
+│   │   └── summary.json
+│   ├── cluster_compare_ref_base_v5_seed42
+│   │   ├── cluster_metrics_wide.csv
+│   │   ├── pairwise_cluster_diff.csv
+│   │   └── summary.json
+│   ├── cluster_compare_ref_base_v5_seed668
+│   │   ├── cluster_metrics_wide.csv
+│   │   ├── pairwise_cluster_diff.csv
+│   │   └── summary.json
+│   ├── cluster_compare_ref_kabsch_all
+│   │   ├── cluster_metrics_wide.csv
+│   │   ├── pairwise_cluster_diff.csv
+│   │   └── summary.json
+│   ├── cluster_compare_ref_kabsch_exclude_4A
+│   │   ├── cluster_metrics_wide.csv
+│   │   ├── pairwise_cluster_diff.csv
+│   │   └── summary.json
+│   ├── cluster_compare_ref_kabsch_exclude_8A
+│   │   ├── cluster_metrics_wide.csv
+│   │   ├── pairwise_cluster_diff.csv
+│   │   └── summary.json
+│   ├── final
+│   │   ├── per_variant_metrics.csv
+│   │   ├── summary.csv
+│   │   └── summary.json
+│   ├── kabsch_all
+│   │   ├── failed_samples.csv
+│   │   └── label_stats.json
+│   ├── kabsch_exclude_4A
+│   │   ├── failed_samples.csv
+│   │   └── label_stats.json
+│   ├── kabsch_exclude_8A
+│   │   ├── failed_samples.csv
+│   │   └── label_stats.json
+│   ├── label_compare_kabsch_all_vs_v5_seed42
+│   ├── label_compare_kabsch_exclude_4A_vs_all
+│   │   ├── per_sample_label_diff.csv
+│   │   └── summary.json
+│   ├── label_compare_kabsch_exclude_4A_vs_v5_seed42
+│   ├── label_compare_kabsch_exclude_8A_vs_all
+│   │   ├── per_sample_label_diff.csv
+│   │   └── summary.json
+│   └── smoke_base_v5_v2
+│       ├── cluster_metrics_wide.csv
+│       ├── pairwise_cluster_diff.csv
+│       └── summary.json
+├── base_v5_direct_seed42
+│   ├── cluster_metrics_test.csv
+│   ├── eval_test.json
+│   ├── predictions_test.csv
+│   └── sample_metrics_test.csv
+├── base_v5_global_loss_seed42
+│   ├── cluster_metrics_test.csv
+│   ├── eval_test.json
+│   ├── predictions_test.csv
+│   └── sample_metrics_test.csv
+├── base_v5_kabsch_all
+│   ├── eval_test.json
+│   └── predictions_test.csv
+├── base_v5_kabsch_exclude_4A
+│   ├── eval_test.json
+│   ├── predictions_test.csv
+│   └── trainer_state.json
+├── base_v5_kabsch_exclude_8A
+│   ├── eval_test.json
+│   └── predictions_test.csv
+├── base_v5_no_context_seed42
+│   ├── cluster_metrics_test.csv
+│   ├── cluster_metrics_valid.csv
+│   ├── eval_test_419952.json
+│   ├── eval_valid_419952.json
+│   ├── predictions_test_419952.csv
+│   ├── predictions_valid_419952.csv
+│   ├── sample_metrics_test.csv
+│   ├── sample_metrics_valid.csv
+│   └── trainer_state.json
+├── base_v5_pure_hurdle_seed42
+│   ├── cluster_metrics_test.csv
+│   ├── eval_test.json
+│   ├── predictions_test.csv
+│   └── sample_metrics_test.csv
+├── base_v5_seed101
+│   ├── counterfactual
+│   │   ├── counterfactual_summary.csv
+│   │   ├── counterfactual_summary.json
+│   │   ├── metrics_original.json
+│   │   ├── metrics_remove_mutation_context.json
+│   │   ├── metrics_reverse_mutation.json
+│   │   ├── metrics_shuffle_mutant_aa.json
+│   │   ├── metrics_shuffle_site.json
+│   │   ├── metrics_wt_wt_negative.json
+│   │   ├── predictions_original.csv
+│   │   ├── predictions_remove_mutation_context.csv
+│   │   ├── predictions_reverse_mutation.csv
+│   │   ├── predictions_shuffle_mutant_aa.csv
+│   │   ├── predictions_shuffle_site.csv
+│   │   └── predictions_wt_wt_negative.csv
+│   ├── eval_test.json
+│   ├── predictions_test.csv
+│   └── trainer_state.json
+├── base_v5_seed42
+│   ├── cluster_metrics_test.csv
+│   ├── cluster_metrics_valid.csv
+│   ├── counterfactual
+│   │   ├── counterfactual_summary.csv
+│   │   ├── counterfactual_summary.json
+│   │   ├── metrics_original.json
+│   │   ├── metrics_remove_mutation_context.json
+│   │   ├── metrics_reverse_mutation.json
+│   │   ├── metrics_shuffle_mutant_aa.json
+│   │   ├── metrics_shuffle_site.json
+│   │   ├── metrics_wt_wt_negative.json
+│   │   ├── predictions_original.csv
+│   │   ├── predictions_remove_mutation_context.csv
+│   │   ├── predictions_reverse_mutation.csv
+│   │   ├── predictions_shuffle_mutant_aa.csv
+│   │   ├── predictions_shuffle_site.csv
+│   │   └── predictions_wt_wt_negative.csv
+│   ├── counterfactual_corrected_seed0
+│   │   ├── cluster_metrics_original.csv
+│   │   ├── cluster_metrics_remove_mutation_context.csv
+│   │   ├── cluster_metrics_reverse_mutation.csv
+│   │   ├── cluster_metrics_shuffle_mutant_aa.csv
+│   │   ├── cluster_metrics_shuffle_site.csv
+│   │   ├── cluster_metrics_wt_wt_negative.csv
+│   │   ├── counterfactual_summary.csv
+│   │   ├── counterfactual_summary.json
+│   │   ├── metrics_original.json
+│   │   ├── metrics_remove_mutation_context.json
+│   │   ├── metrics_reverse_mutation.json
+│   │   ├── metrics_shuffle_mutant_aa.json
+│   │   ├── metrics_shuffle_site.json
+│   │   ├── metrics_wt_wt_negative.json
+│   │   ├── predictions_original.csv
+│   │   ├── predictions_remove_mutation_context.csv
+│   │   ├── predictions_reverse_mutation.csv
+│   │   ├── predictions_shuffle_mutant_aa.csv
+│   │   ├── predictions_shuffle_site.csv
+│   │   ├── predictions_wt_wt_negative.csv
+│   │   ├── sample_metrics_original.csv
+│   │   ├── sample_metrics_remove_mutation_context.csv
+│   │   ├── sample_metrics_reverse_mutation.csv
+│   │   ├── sample_metrics_shuffle_mutant_aa.csv
+│   │   ├── sample_metrics_shuffle_site.csv
+│   │   └── sample_metrics_wt_wt_negative.csv
+│   ├── counterfactual_corrected_seed1
+│   │   ├── cluster_metrics_original.csv
+│   │   ├── cluster_metrics_remove_mutation_context.csv
+│   │   ├── cluster_metrics_reverse_mutation.csv
+│   │   ├── cluster_metrics_shuffle_mutant_aa.csv
+│   │   ├── cluster_metrics_shuffle_site.csv
+│   │   ├── cluster_metrics_wt_wt_negative.csv
+│   │   ├── counterfactual_summary.csv
+│   │   ├── counterfactual_summary.json
+│   │   ├── metrics_original.json
+│   │   ├── metrics_remove_mutation_context.json
+│   │   ├── metrics_reverse_mutation.json
+│   │   ├── metrics_shuffle_mutant_aa.json
+│   │   ├── metrics_shuffle_site.json
+│   │   ├── metrics_wt_wt_negative.json
+│   │   ├── predictions_original.csv
+│   │   ├── predictions_remove_mutation_context.csv
+│   │   ├── predictions_reverse_mutation.csv
+│   │   ├── predictions_shuffle_mutant_aa.csv
+│   │   ├── predictions_shuffle_site.csv
+│   │   ├── predictions_wt_wt_negative.csv
+│   │   ├── sample_metrics_original.csv
+│   │   ├── sample_metrics_remove_mutation_context.csv
+│   │   ├── sample_metrics_reverse_mutation.csv
+│   │   ├── sample_metrics_shuffle_mutant_aa.csv
+│   │   ├── sample_metrics_shuffle_site.csv
+│   │   └── sample_metrics_wt_wt_negative.csv
+│   ├── counterfactual_corrected_seed2
+│   │   ├── cluster_metrics_original.csv
+│   │   ├── cluster_metrics_remove_mutation_context.csv
+│   │   ├── cluster_metrics_reverse_mutation.csv
+│   │   ├── cluster_metrics_shuffle_mutant_aa.csv
+│   │   ├── cluster_metrics_shuffle_site.csv
+│   │   ├── cluster_metrics_wt_wt_negative.csv
+│   │   ├── counterfactual_summary.csv
+│   │   ├── counterfactual_summary.json
+│   │   ├── metrics_original.json
+│   │   ├── metrics_remove_mutation_context.json
+│   │   ├── metrics_reverse_mutation.json
+│   │   ├── metrics_shuffle_mutant_aa.json
+│   │   ├── metrics_shuffle_site.json
+│   │   ├── metrics_wt_wt_negative.json
+│   │   ├── predictions_original.csv
+│   │   ├── predictions_remove_mutation_context.csv
+│   │   ├── predictions_reverse_mutation.csv
+│   │   ├── predictions_shuffle_mutant_aa.csv
+│   │   ├── predictions_shuffle_site.csv
+│   │   ├── predictions_wt_wt_negative.csv
+│   │   ├── sample_metrics_original.csv
+│   │   ├── sample_metrics_remove_mutation_context.csv
+│   │   ├── sample_metrics_reverse_mutation.csv
+│   │   ├── sample_metrics_shuffle_mutant_aa.csv
+│   │   ├── sample_metrics_shuffle_site.csv
+│   │   └── sample_metrics_wt_wt_negative.csv
+│   ├── counterfactual_corrected_seed3
+│   │   ├── cluster_metrics_original.csv
+│   │   ├── cluster_metrics_remove_mutation_context.csv
+│   │   ├── cluster_metrics_reverse_mutation.csv
+│   │   ├── cluster_metrics_shuffle_mutant_aa.csv
+│   │   ├── cluster_metrics_shuffle_site.csv
+│   │   ├── cluster_metrics_wt_wt_negative.csv
+│   │   ├── counterfactual_summary.csv
+│   │   ├── counterfactual_summary.json
+│   │   ├── metrics_original.json
+│   │   ├── metrics_remove_mutation_context.json
+│   │   ├── metrics_reverse_mutation.json
+│   │   ├── metrics_shuffle_mutant_aa.json
+│   │   ├── metrics_shuffle_site.json
+│   │   ├── metrics_wt_wt_negative.json
+│   │   ├── predictions_original.csv
+│   │   ├── predictions_remove_mutation_context.csv
+│   │   ├── predictions_reverse_mutation.csv
+│   │   ├── predictions_shuffle_mutant_aa.csv
+│   │   ├── predictions_shuffle_site.csv
+│   │   ├── predictions_wt_wt_negative.csv
+│   │   ├── sample_metrics_original.csv
+│   │   ├── sample_metrics_remove_mutation_context.csv
+│   │   ├── sample_metrics_reverse_mutation.csv
+│   │   ├── sample_metrics_shuffle_mutant_aa.csv
+│   │   ├── sample_metrics_shuffle_site.csv
+│   │   └── sample_metrics_wt_wt_negative.csv
+│   ├── counterfactual_corrected_seed4
+│   │   ├── cluster_metrics_original.csv
+│   │   ├── cluster_metrics_remove_mutation_context.csv
+│   │   ├── cluster_metrics_reverse_mutation.csv
+│   │   ├── cluster_metrics_shuffle_mutant_aa.csv
+│   │   ├── cluster_metrics_shuffle_site.csv
+│   │   ├── cluster_metrics_wt_wt_negative.csv
+│   │   ├── counterfactual_summary.csv
+│   │   ├── counterfactual_summary.json
+│   │   ├── metrics_original.json
+│   │   ├── metrics_remove_mutation_context.json
+│   │   ├── metrics_reverse_mutation.json
+│   │   ├── metrics_shuffle_mutant_aa.json
+│   │   ├── metrics_shuffle_site.json
+│   │   ├── metrics_wt_wt_negative.json
+│   │   ├── predictions_original.csv
+│   │   ├── predictions_remove_mutation_context.csv
+│   │   ├── predictions_reverse_mutation.csv
+│   │   ├── predictions_shuffle_mutant_aa.csv
+│   │   ├── predictions_shuffle_site.csv
+│   │   ├── predictions_wt_wt_negative.csv
+│   │   ├── sample_metrics_original.csv
+│   │   ├── sample_metrics_remove_mutation_context.csv
+│   │   ├── sample_metrics_reverse_mutation.csv
+│   │   ├── sample_metrics_shuffle_mutant_aa.csv
+│   │   ├── sample_metrics_shuffle_site.csv
+│   │   └── sample_metrics_wt_wt_negative.csv
+│   ├── counterfactual_corrected_seed5
+│   │   ├── cluster_metrics_original.csv
+│   │   ├── cluster_metrics_remove_mutation_context.csv
+│   │   ├── cluster_metrics_reverse_mutation.csv
+│   │   ├── cluster_metrics_shuffle_mutant_aa.csv
+│   │   ├── cluster_metrics_shuffle_site.csv
+│   │   ├── cluster_metrics_wt_wt_negative.csv
+│   │   ├── counterfactual_summary.csv
+│   │   ├── counterfactual_summary.json
+│   │   ├── metrics_original.json
+│   │   ├── metrics_remove_mutation_context.json
+│   │   ├── metrics_reverse_mutation.json
+│   │   ├── metrics_shuffle_mutant_aa.json
+│   │   ├── metrics_shuffle_site.json
+│   │   ├── metrics_wt_wt_negative.json
+│   │   ├── predictions_original.csv
+│   │   ├── predictions_remove_mutation_context.csv
+│   │   ├── predictions_reverse_mutation.csv
+│   │   ├── predictions_shuffle_mutant_aa.csv
+│   │   ├── predictions_shuffle_site.csv
+│   │   ├── predictions_wt_wt_negative.csv
+│   │   ├── sample_metrics_original.csv
+│   │   ├── sample_metrics_remove_mutation_context.csv
+│   │   ├── sample_metrics_reverse_mutation.csv
+│   │   ├── sample_metrics_shuffle_mutant_aa.csv
+│   │   ├── sample_metrics_shuffle_site.csv
+│   │   └── sample_metrics_wt_wt_negative.csv
+│   ├── counterfactual_corrected_seed6
+│   │   ├── cluster_metrics_original.csv
+│   │   ├── cluster_metrics_remove_mutation_context.csv
+│   │   ├── cluster_metrics_reverse_mutation.csv
+│   │   ├── cluster_metrics_shuffle_mutant_aa.csv
+│   │   ├── cluster_metrics_shuffle_site.csv
+│   │   ├── cluster_metrics_wt_wt_negative.csv
+│   │   ├── counterfactual_summary.csv
+│   │   ├── counterfactual_summary.json
+│   │   ├── metrics_original.json
+│   │   ├── metrics_remove_mutation_context.json
+│   │   ├── metrics_reverse_mutation.json
+│   │   ├── metrics_shuffle_mutant_aa.json
+│   │   ├── metrics_shuffle_site.json
+│   │   ├── metrics_wt_wt_negative.json
+│   │   ├── predictions_original.csv
+│   │   ├── predictions_remove_mutation_context.csv
+│   │   ├── predictions_reverse_mutation.csv
+│   │   ├── predictions_shuffle_mutant_aa.csv
+│   │   ├── predictions_shuffle_site.csv
+│   │   ├── predictions_wt_wt_negative.csv
+│   │   ├── sample_metrics_original.csv
+│   │   ├── sample_metrics_remove_mutation_context.csv
+│   │   ├── sample_metrics_reverse_mutation.csv
+│   │   ├── sample_metrics_shuffle_mutant_aa.csv
+│   │   ├── sample_metrics_shuffle_site.csv
+│   │   └── sample_metrics_wt_wt_negative.csv
+│   ├── counterfactual_corrected_seed7
+│   │   ├── cluster_metrics_original.csv
+│   │   ├── cluster_metrics_remove_mutation_context.csv
+│   │   ├── cluster_metrics_reverse_mutation.csv
+│   │   ├── cluster_metrics_shuffle_mutant_aa.csv
+│   │   ├── cluster_metrics_shuffle_site.csv
+│   │   ├── cluster_metrics_wt_wt_negative.csv
+│   │   ├── counterfactual_summary.csv
+│   │   ├── counterfactual_summary.json
+│   │   ├── metrics_original.json
+│   │   ├── metrics_remove_mutation_context.json
+│   │   ├── metrics_reverse_mutation.json
+│   │   ├── metrics_shuffle_mutant_aa.json
+│   │   ├── metrics_shuffle_site.json
+│   │   ├── metrics_wt_wt_negative.json
+│   │   ├── predictions_original.csv
+│   │   ├── predictions_remove_mutation_context.csv
+│   │   ├── predictions_reverse_mutation.csv
+│   │   ├── predictions_shuffle_mutant_aa.csv
+│   │   ├── predictions_shuffle_site.csv
+│   │   ├── predictions_wt_wt_negative.csv
+│   │   ├── sample_metrics_original.csv
+│   │   ├── sample_metrics_remove_mutation_context.csv
+│   │   ├── sample_metrics_reverse_mutation.csv
+│   │   ├── sample_metrics_shuffle_mutant_aa.csv
+│   │   ├── sample_metrics_shuffle_site.csv
+│   │   └── sample_metrics_wt_wt_negative.csv
+│   ├── counterfactual_corrected_seed8
+│   │   ├── cluster_metrics_original.csv
+│   │   ├── cluster_metrics_remove_mutation_context.csv
+│   │   ├── cluster_metrics_reverse_mutation.csv
+│   │   ├── cluster_metrics_shuffle_mutant_aa.csv
+│   │   ├── cluster_metrics_shuffle_site.csv
+│   │   ├── cluster_metrics_wt_wt_negative.csv
+│   │   ├── counterfactual_summary.csv
+│   │   ├── counterfactual_summary.json
+│   │   ├── metrics_original.json
+│   │   ├── metrics_remove_mutation_context.json
+│   │   ├── metrics_reverse_mutation.json
+│   │   ├── metrics_shuffle_mutant_aa.json
+│   │   ├── metrics_shuffle_site.json
+│   │   ├── metrics_wt_wt_negative.json
+│   │   ├── predictions_original.csv
+│   │   ├── predictions_remove_mutation_context.csv
+│   │   ├── predictions_reverse_mutation.csv
+│   │   ├── predictions_shuffle_mutant_aa.csv
+│   │   ├── predictions_shuffle_site.csv
+│   │   ├── predictions_wt_wt_negative.csv
+│   │   ├── sample_metrics_original.csv
+│   │   ├── sample_metrics_remove_mutation_context.csv
+│   │   ├── sample_metrics_reverse_mutation.csv
+│   │   ├── sample_metrics_shuffle_mutant_aa.csv
+│   │   ├── sample_metrics_shuffle_site.csv
+│   │   └── sample_metrics_wt_wt_negative.csv
+│   ├── counterfactual_corrected_seed9
+│   │   ├── cluster_metrics_original.csv
+│   │   ├── cluster_metrics_remove_mutation_context.csv
+│   │   ├── cluster_metrics_reverse_mutation.csv
+│   │   ├── cluster_metrics_shuffle_mutant_aa.csv
+│   │   ├── cluster_metrics_shuffle_site.csv
+│   │   ├── cluster_metrics_wt_wt_negative.csv
+│   │   ├── counterfactual_summary.csv
+│   │   ├── counterfactual_summary.json
+│   │   ├── metrics_original.json
+│   │   ├── metrics_remove_mutation_context.json
+│   │   ├── metrics_reverse_mutation.json
+│   │   ├── metrics_shuffle_mutant_aa.json
+│   │   ├── metrics_shuffle_site.json
+│   │   ├── metrics_wt_wt_negative.json
+│   │   ├── predictions_original.csv
+│   │   ├── predictions_remove_mutation_context.csv
+│   │   ├── predictions_reverse_mutation.csv
+│   │   ├── predictions_shuffle_mutant_aa.csv
+│   │   ├── predictions_shuffle_site.csv
+│   │   ├── predictions_wt_wt_negative.csv
+│   │   ├── sample_metrics_original.csv
+│   │   ├── sample_metrics_remove_mutation_context.csv
+│   │   ├── sample_metrics_reverse_mutation.csv
+│   │   ├── sample_metrics_shuffle_mutant_aa.csv
+│   │   ├── sample_metrics_shuffle_site.csv
+│   │   └── sample_metrics_wt_wt_negative.csv
+│   ├── eval_test.json
+│   ├── eval_valid.json
+│   ├── predictions_test.csv
+│   ├── predictions_valid.csv
+│   ├── sample_metrics_test.csv
+│   ├── sample_metrics_valid.csv
+│   └── trainer_state.json
+├── base_v5_seed668
+│   ├── counterfactual
+│   │   ├── counterfactual_summary.csv
+│   │   ├── counterfactual_summary.json
+│   │   ├── metrics_original.json
+│   │   ├── metrics_remove_mutation_context.json
+│   │   ├── metrics_reverse_mutation.json
+│   │   ├── metrics_shuffle_mutant_aa.json
+│   │   ├── metrics_shuffle_site.json
+│   │   ├── metrics_wt_wt_negative.json
+│   │   ├── predictions_original.csv
+│   │   ├── predictions_remove_mutation_context.csv
+│   │   ├── predictions_reverse_mutation.csv
+│   │   ├── predictions_shuffle_mutant_aa.csv
+│   │   ├── predictions_shuffle_site.csv
+│   │   └── predictions_wt_wt_negative.csv
+│   ├── eval_test.json
+│   ├── predictions_test.csv
+│   └── trainer_state.json
+├── base_v5_time
+│   ├── cluster_metrics_test.csv
+│   ├── cluster_metrics_train.csv
+│   ├── cluster_metrics_valid.csv
+│   ├── eval_test.json
+│   ├── eval_train.json
+│   ├── eval_valid.json
+│   ├── predictions_test.csv
+│   ├── predictions_train.csv
+│   ├── predictions_valid.csv
+│   ├── sample_metrics_test.csv
+│   ├── sample_metrics_train.csv
+│   ├── sample_metrics_valid.csv
+│   ├── time_split_report.json
+│   └── time_split_report.md
+├── biological_stratification
+│   ├── v5_seed101_vs_coordinate_residual
+│   │   ├── biological_annotations.csv
+│   │   ├── figures
+│   │   │   ├── charge_binary_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_binary_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_binary_group_shell_mae_cluster_mean.png
+│   │   │   ├── charge_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_group_shell_mae_cluster_mean.png
+│   │   │   ├── domain_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── domain_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── domain_group_shell_mae_cluster_mean.png
+│   │   │   ├── exposure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── exposure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── exposure_group_shell_mae_cluster_mean.png
+│   │   │   ├── gly_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── gly_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── gly_group_shell_mae_cluster_mean.png
+│   │   │   ├── glypro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── glypro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── glypro_group_shell_mae_cluster_mean.png
+│   │   │   ├── length_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── length_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── length_group_shell_mae_cluster_mean.png
+│   │   │   ├── pro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── pro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── pro_group_shell_mae_cluster_mean.png
+│   │   │   ├── resolution_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── resolution_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── resolution_group_shell_mae_cluster_mean.png
+│   │   │   ├── secondary_structure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── secondary_structure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── secondary_structure_group_shell_mae_cluster_mean.png
+│   │   │   ├── substitution_size_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── substitution_size_group_perturbed_auprc_cluster_mean.png
+│   │   │   └── substitution_size_group_shell_mae_cluster_mean.png
+│   │   ├── pairwise_stratified_diff.csv
+│   │   ├── sample_metrics_with_strata.csv
+│   │   ├── stratified_metrics_long.csv
+│   │   ├── stratified_metrics_wide.csv
+│   │   ├── summary.json
+│   │   └── warnings.txt
+│   ├── v5_seed101_vs_esm_mlp
+│   │   ├── biological_annotations.csv
+│   │   ├── figures
+│   │   │   ├── charge_binary_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_binary_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_binary_group_shell_mae_cluster_mean.png
+│   │   │   ├── charge_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_group_shell_mae_cluster_mean.png
+│   │   │   ├── domain_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── domain_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── domain_group_shell_mae_cluster_mean.png
+│   │   │   ├── exposure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── exposure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── exposure_group_shell_mae_cluster_mean.png
+│   │   │   ├── gly_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── gly_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── gly_group_shell_mae_cluster_mean.png
+│   │   │   ├── glypro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── glypro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── glypro_group_shell_mae_cluster_mean.png
+│   │   │   ├── length_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── length_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── length_group_shell_mae_cluster_mean.png
+│   │   │   ├── pro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── pro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── pro_group_shell_mae_cluster_mean.png
+│   │   │   ├── resolution_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── resolution_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── resolution_group_shell_mae_cluster_mean.png
+│   │   │   ├── secondary_structure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── secondary_structure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── secondary_structure_group_shell_mae_cluster_mean.png
+│   │   │   ├── substitution_size_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── substitution_size_group_perturbed_auprc_cluster_mean.png
+│   │   │   └── substitution_size_group_shell_mae_cluster_mean.png
+│   │   ├── pairwise_stratified_diff.csv
+│   │   ├── sample_metrics_with_strata.csv
+│   │   ├── stratified_metrics_long.csv
+│   │   ├── stratified_metrics_wide.csv
+│   │   ├── summary.json
+│   │   └── warnings.txt
+│   ├── v5_seed101_vs_geometry_gnn
+│   │   ├── biological_annotations.csv
+│   │   ├── figures
+│   │   │   ├── charge_binary_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_binary_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_binary_group_shell_mae_cluster_mean.png
+│   │   │   ├── charge_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_group_shell_mae_cluster_mean.png
+│   │   │   ├── domain_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── domain_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── domain_group_shell_mae_cluster_mean.png
+│   │   │   ├── exposure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── exposure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── exposure_group_shell_mae_cluster_mean.png
+│   │   │   ├── gly_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── gly_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── gly_group_shell_mae_cluster_mean.png
+│   │   │   ├── glypro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── glypro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── glypro_group_shell_mae_cluster_mean.png
+│   │   │   ├── length_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── length_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── length_group_shell_mae_cluster_mean.png
+│   │   │   ├── pro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── pro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── pro_group_shell_mae_cluster_mean.png
+│   │   │   ├── resolution_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── resolution_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── resolution_group_shell_mae_cluster_mean.png
+│   │   │   ├── secondary_structure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── secondary_structure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── secondary_structure_group_shell_mae_cluster_mean.png
+│   │   │   ├── substitution_size_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── substitution_size_group_perturbed_auprc_cluster_mean.png
+│   │   │   └── substitution_size_group_shell_mae_cluster_mean.png
+│   │   ├── pairwise_stratified_diff.csv
+│   │   ├── sample_metrics_with_strata.csv
+│   │   ├── stratified_metrics_long.csv
+│   │   ├── stratified_metrics_wide.csv
+│   │   ├── summary.json
+│   │   └── warnings.txt
+│   ├── v5_seed101_vs_global_mean
+│   │   ├── biological_annotations.csv
+│   │   ├── figures
+│   │   │   ├── charge_binary_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_binary_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_binary_group_shell_mae_cluster_mean.png
+│   │   │   ├── charge_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_group_shell_mae_cluster_mean.png
+│   │   │   ├── domain_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── domain_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── domain_group_shell_mae_cluster_mean.png
+│   │   │   ├── exposure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── exposure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── exposure_group_shell_mae_cluster_mean.png
+│   │   │   ├── gly_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── gly_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── gly_group_shell_mae_cluster_mean.png
+│   │   │   ├── glypro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── glypro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── glypro_group_shell_mae_cluster_mean.png
+│   │   │   ├── length_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── length_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── length_group_shell_mae_cluster_mean.png
+│   │   │   ├── pro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── pro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── pro_group_shell_mae_cluster_mean.png
+│   │   │   ├── resolution_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── resolution_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── resolution_group_shell_mae_cluster_mean.png
+│   │   │   ├── secondary_structure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── secondary_structure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── secondary_structure_group_shell_mae_cluster_mean.png
+│   │   │   ├── substitution_size_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── substitution_size_group_perturbed_auprc_cluster_mean.png
+│   │   │   └── substitution_size_group_shell_mae_cluster_mean.png
+│   │   ├── pairwise_stratified_diff.csv
+│   │   ├── sample_metrics_with_strata.csv
+│   │   ├── stratified_metrics_long.csv
+│   │   ├── stratified_metrics_wide.csv
+│   │   ├── summary.json
+│   │   └── warnings.txt
+│   ├── v5_seed101_vs_mutation_type_shell_mean
+│   │   ├── biological_annotations.csv
+│   │   ├── figures
+│   │   │   ├── charge_binary_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_binary_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_binary_group_shell_mae_cluster_mean.png
+│   │   │   ├── charge_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_group_shell_mae_cluster_mean.png
+│   │   │   ├── domain_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── domain_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── domain_group_shell_mae_cluster_mean.png
+│   │   │   ├── exposure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── exposure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── exposure_group_shell_mae_cluster_mean.png
+│   │   │   ├── gly_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── gly_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── gly_group_shell_mae_cluster_mean.png
+│   │   │   ├── glypro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── glypro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── glypro_group_shell_mae_cluster_mean.png
+│   │   │   ├── length_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── length_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── length_group_shell_mae_cluster_mean.png
+│   │   │   ├── pro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── pro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── pro_group_shell_mae_cluster_mean.png
+│   │   │   ├── resolution_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── resolution_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── resolution_group_shell_mae_cluster_mean.png
+│   │   │   ├── secondary_structure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── secondary_structure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── secondary_structure_group_shell_mae_cluster_mean.png
+│   │   │   ├── substitution_size_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── substitution_size_group_perturbed_auprc_cluster_mean.png
+│   │   │   └── substitution_size_group_shell_mae_cluster_mean.png
+│   │   ├── pairwise_stratified_diff.csv
+│   │   ├── sample_metrics_with_strata.csv
+│   │   ├── stratified_metrics_long.csv
+│   │   ├── stratified_metrics_wide.csv
+│   │   ├── summary.json
+│   │   └── warnings.txt
+│   ├── v5_seed101_vs_shell_mean
+│   │   ├── biological_annotations.csv
+│   │   ├── figures
+│   │   │   ├── charge_binary_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_binary_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_binary_group_shell_mae_cluster_mean.png
+│   │   │   ├── charge_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_group_shell_mae_cluster_mean.png
+│   │   │   ├── domain_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── domain_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── domain_group_shell_mae_cluster_mean.png
+│   │   │   ├── exposure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── exposure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── exposure_group_shell_mae_cluster_mean.png
+│   │   │   ├── gly_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── gly_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── gly_group_shell_mae_cluster_mean.png
+│   │   │   ├── glypro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── glypro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── glypro_group_shell_mae_cluster_mean.png
+│   │   │   ├── length_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── length_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── length_group_shell_mae_cluster_mean.png
+│   │   │   ├── pro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── pro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── pro_group_shell_mae_cluster_mean.png
+│   │   │   ├── resolution_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── resolution_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── resolution_group_shell_mae_cluster_mean.png
+│   │   │   ├── secondary_structure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── secondary_structure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── secondary_structure_group_shell_mae_cluster_mean.png
+│   │   │   ├── substitution_size_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── substitution_size_group_perturbed_auprc_cluster_mean.png
+│   │   │   └── substitution_size_group_shell_mae_cluster_mean.png
+│   │   ├── pairwise_stratified_diff.csv
+│   │   ├── sample_metrics_with_strata.csv
+│   │   ├── stratified_metrics_long.csv
+│   │   ├── stratified_metrics_wide.csv
+│   │   ├── summary.json
+│   │   └── warnings.txt
+│   ├── v5_seed101_vs_zero_response
+│   │   ├── biological_annotations.csv
+│   │   ├── figures
+│   │   │   ├── charge_binary_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_binary_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_binary_group_shell_mae_cluster_mean.png
+│   │   │   ├── charge_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_group_shell_mae_cluster_mean.png
+│   │   │   ├── domain_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── domain_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── domain_group_shell_mae_cluster_mean.png
+│   │   │   ├── exposure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── exposure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── exposure_group_shell_mae_cluster_mean.png
+│   │   │   ├── gly_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── gly_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── gly_group_shell_mae_cluster_mean.png
+│   │   │   ├── glypro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── glypro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── glypro_group_shell_mae_cluster_mean.png
+│   │   │   ├── length_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── length_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── length_group_shell_mae_cluster_mean.png
+│   │   │   ├── pro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── pro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── pro_group_shell_mae_cluster_mean.png
+│   │   │   ├── resolution_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── resolution_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── resolution_group_shell_mae_cluster_mean.png
+│   │   │   ├── secondary_structure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── secondary_structure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── secondary_structure_group_shell_mae_cluster_mean.png
+│   │   │   ├── substitution_size_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── substitution_size_group_perturbed_auprc_cluster_mean.png
+│   │   │   └── substitution_size_group_shell_mae_cluster_mean.png
+│   │   ├── pairwise_stratified_diff.csv
+│   │   ├── sample_metrics_with_strata.csv
+│   │   ├── stratified_metrics_long.csv
+│   │   ├── stratified_metrics_wide.csv
+│   │   ├── summary.json
+│   │   └── warnings.txt
+│   ├── v5_seed42_vs_coordinate_residual
+│   │   ├── biological_annotations.csv
+│   │   ├── figures
+│   │   │   ├── charge_binary_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_binary_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_binary_group_shell_mae_cluster_mean.png
+│   │   │   ├── charge_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_group_shell_mae_cluster_mean.png
+│   │   │   ├── domain_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── domain_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── domain_group_shell_mae_cluster_mean.png
+│   │   │   ├── exposure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── exposure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── exposure_group_shell_mae_cluster_mean.png
+│   │   │   ├── gly_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── gly_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── gly_group_shell_mae_cluster_mean.png
+│   │   │   ├── glypro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── glypro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── glypro_group_shell_mae_cluster_mean.png
+│   │   │   ├── length_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── length_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── length_group_shell_mae_cluster_mean.png
+│   │   │   ├── pro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── pro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── pro_group_shell_mae_cluster_mean.png
+│   │   │   ├── resolution_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── resolution_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── resolution_group_shell_mae_cluster_mean.png
+│   │   │   ├── secondary_structure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── secondary_structure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── secondary_structure_group_shell_mae_cluster_mean.png
+│   │   │   ├── substitution_size_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── substitution_size_group_perturbed_auprc_cluster_mean.png
+│   │   │   └── substitution_size_group_shell_mae_cluster_mean.png
+│   │   ├── pairwise_stratified_diff.csv
+│   │   ├── sample_metrics_with_strata.csv
+│   │   ├── stratified_metrics_long.csv
+│   │   ├── stratified_metrics_wide.csv
+│   │   ├── summary.json
+│   │   └── warnings.txt
+│   ├── v5_seed42_vs_esm_mlp
+│   │   ├── biological_annotations.csv
+│   │   ├── figures
+│   │   │   ├── charge_binary_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_binary_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_binary_group_shell_mae_cluster_mean.png
+│   │   │   ├── charge_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_group_shell_mae_cluster_mean.png
+│   │   │   ├── domain_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── domain_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── domain_group_shell_mae_cluster_mean.png
+│   │   │   ├── exposure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── exposure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── exposure_group_shell_mae_cluster_mean.png
+│   │   │   ├── gly_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── gly_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── gly_group_shell_mae_cluster_mean.png
+│   │   │   ├── glypro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── glypro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── glypro_group_shell_mae_cluster_mean.png
+│   │   │   ├── length_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── length_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── length_group_shell_mae_cluster_mean.png
+│   │   │   ├── pro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── pro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── pro_group_shell_mae_cluster_mean.png
+│   │   │   ├── resolution_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── resolution_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── resolution_group_shell_mae_cluster_mean.png
+│   │   │   ├── secondary_structure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── secondary_structure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── secondary_structure_group_shell_mae_cluster_mean.png
+│   │   │   ├── substitution_size_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── substitution_size_group_perturbed_auprc_cluster_mean.png
+│   │   │   └── substitution_size_group_shell_mae_cluster_mean.png
+│   │   ├── pairwise_stratified_diff.csv
+│   │   ├── sample_metrics_with_strata.csv
+│   │   ├── stratified_metrics_long.csv
+│   │   ├── stratified_metrics_wide.csv
+│   │   ├── summary.json
+│   │   └── warnings.txt
+│   ├── v5_seed42_vs_geometry_gnn
+│   │   ├── biological_annotations.csv
+│   │   ├── figures
+│   │   │   ├── charge_binary_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_binary_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_binary_group_shell_mae_cluster_mean.png
+│   │   │   ├── charge_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_group_shell_mae_cluster_mean.png
+│   │   │   ├── domain_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── domain_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── domain_group_shell_mae_cluster_mean.png
+│   │   │   ├── exposure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── exposure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── exposure_group_shell_mae_cluster_mean.png
+│   │   │   ├── gly_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── gly_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── gly_group_shell_mae_cluster_mean.png
+│   │   │   ├── glypro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── glypro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── glypro_group_shell_mae_cluster_mean.png
+│   │   │   ├── length_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── length_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── length_group_shell_mae_cluster_mean.png
+│   │   │   ├── pro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── pro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── pro_group_shell_mae_cluster_mean.png
+│   │   │   ├── resolution_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── resolution_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── resolution_group_shell_mae_cluster_mean.png
+│   │   │   ├── secondary_structure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── secondary_structure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── secondary_structure_group_shell_mae_cluster_mean.png
+│   │   │   ├── substitution_size_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── substitution_size_group_perturbed_auprc_cluster_mean.png
+│   │   │   └── substitution_size_group_shell_mae_cluster_mean.png
+│   │   ├── pairwise_stratified_diff.csv
+│   │   ├── sample_metrics_with_strata.csv
+│   │   ├── stratified_metrics_long.csv
+│   │   ├── stratified_metrics_wide.csv
+│   │   ├── summary.json
+│   │   └── warnings.txt
+│   ├── v5_seed42_vs_global_mean
+│   │   ├── biological_annotations.csv
+│   │   ├── figures
+│   │   │   ├── charge_binary_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_binary_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_binary_group_shell_mae_cluster_mean.png
+│   │   │   ├── charge_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_group_shell_mae_cluster_mean.png
+│   │   │   ├── domain_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── domain_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── domain_group_shell_mae_cluster_mean.png
+│   │   │   ├── exposure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── exposure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── exposure_group_shell_mae_cluster_mean.png
+│   │   │   ├── gly_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── gly_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── gly_group_shell_mae_cluster_mean.png
+│   │   │   ├── glypro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── glypro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── glypro_group_shell_mae_cluster_mean.png
+│   │   │   ├── length_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── length_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── length_group_shell_mae_cluster_mean.png
+│   │   │   ├── pro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── pro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── pro_group_shell_mae_cluster_mean.png
+│   │   │   ├── resolution_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── resolution_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── resolution_group_shell_mae_cluster_mean.png
+│   │   │   ├── secondary_structure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── secondary_structure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── secondary_structure_group_shell_mae_cluster_mean.png
+│   │   │   ├── substitution_size_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── substitution_size_group_perturbed_auprc_cluster_mean.png
+│   │   │   └── substitution_size_group_shell_mae_cluster_mean.png
+│   │   ├── pairwise_stratified_diff.csv
+│   │   ├── sample_metrics_with_strata.csv
+│   │   ├── stratified_metrics_long.csv
+│   │   ├── stratified_metrics_wide.csv
+│   │   ├── summary.json
+│   │   └── warnings.txt
+│   ├── v5_seed42_vs_mutation_type_shell_mean
+│   │   ├── biological_annotations.csv
+│   │   ├── figures
+│   │   │   ├── charge_binary_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_binary_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_binary_group_shell_mae_cluster_mean.png
+│   │   │   ├── charge_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_group_shell_mae_cluster_mean.png
+│   │   │   ├── domain_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── domain_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── domain_group_shell_mae_cluster_mean.png
+│   │   │   ├── exposure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── exposure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── exposure_group_shell_mae_cluster_mean.png
+│   │   │   ├── gly_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── gly_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── gly_group_shell_mae_cluster_mean.png
+│   │   │   ├── glypro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── glypro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── glypro_group_shell_mae_cluster_mean.png
+│   │   │   ├── length_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── length_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── length_group_shell_mae_cluster_mean.png
+│   │   │   ├── pro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── pro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── pro_group_shell_mae_cluster_mean.png
+│   │   │   ├── resolution_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── resolution_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── resolution_group_shell_mae_cluster_mean.png
+│   │   │   ├── secondary_structure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── secondary_structure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── secondary_structure_group_shell_mae_cluster_mean.png
+│   │   │   ├── substitution_size_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── substitution_size_group_perturbed_auprc_cluster_mean.png
+│   │   │   └── substitution_size_group_shell_mae_cluster_mean.png
+│   │   ├── pairwise_stratified_diff.csv
+│   │   ├── sample_metrics_with_strata.csv
+│   │   ├── stratified_metrics_long.csv
+│   │   ├── stratified_metrics_wide.csv
+│   │   ├── summary.json
+│   │   └── warnings.txt
+│   ├── v5_seed42_vs_shell_mean
+│   │   ├── biological_annotations.csv
+│   │   ├── figures
+│   │   │   ├── charge_binary_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_binary_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_binary_group_shell_mae_cluster_mean.png
+│   │   │   ├── charge_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_group_shell_mae_cluster_mean.png
+│   │   │   ├── domain_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── domain_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── domain_group_shell_mae_cluster_mean.png
+│   │   │   ├── exposure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── exposure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── exposure_group_shell_mae_cluster_mean.png
+│   │   │   ├── gly_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── gly_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── gly_group_shell_mae_cluster_mean.png
+│   │   │   ├── glypro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── glypro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── glypro_group_shell_mae_cluster_mean.png
+│   │   │   ├── length_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── length_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── length_group_shell_mae_cluster_mean.png
+│   │   │   ├── pro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── pro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── pro_group_shell_mae_cluster_mean.png
+│   │   │   ├── resolution_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── resolution_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── resolution_group_shell_mae_cluster_mean.png
+│   │   │   ├── secondary_structure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── secondary_structure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── secondary_structure_group_shell_mae_cluster_mean.png
+│   │   │   ├── substitution_size_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── substitution_size_group_perturbed_auprc_cluster_mean.png
+│   │   │   └── substitution_size_group_shell_mae_cluster_mean.png
+│   │   ├── pairwise_stratified_diff.csv
+│   │   ├── sample_metrics_with_strata.csv
+│   │   ├── stratified_metrics_long.csv
+│   │   ├── stratified_metrics_wide.csv
+│   │   ├── summary.json
+│   │   └── warnings.txt
+│   ├── v5_seed42_vs_zero_response
+│   │   ├── biological_annotations.csv
+│   │   ├── figures
+│   │   │   ├── charge_binary_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_binary_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_binary_group_shell_mae_cluster_mean.png
+│   │   │   ├── charge_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_group_shell_mae_cluster_mean.png
+│   │   │   ├── domain_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── domain_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── domain_group_shell_mae_cluster_mean.png
+│   │   │   ├── exposure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── exposure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── exposure_group_shell_mae_cluster_mean.png
+│   │   │   ├── gly_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── gly_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── gly_group_shell_mae_cluster_mean.png
+│   │   │   ├── glypro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── glypro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── glypro_group_shell_mae_cluster_mean.png
+│   │   │   ├── length_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── length_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── length_group_shell_mae_cluster_mean.png
+│   │   │   ├── pro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── pro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── pro_group_shell_mae_cluster_mean.png
+│   │   │   ├── resolution_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── resolution_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── resolution_group_shell_mae_cluster_mean.png
+│   │   │   ├── secondary_structure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── secondary_structure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── secondary_structure_group_shell_mae_cluster_mean.png
+│   │   │   ├── substitution_size_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── substitution_size_group_perturbed_auprc_cluster_mean.png
+│   │   │   └── substitution_size_group_shell_mae_cluster_mean.png
+│   │   ├── pairwise_stratified_diff.csv
+│   │   ├── sample_metrics_with_strata.csv
+│   │   ├── stratified_metrics_long.csv
+│   │   ├── stratified_metrics_wide.csv
+│   │   ├── summary.json
+│   │   └── warnings.txt
+│   ├── v5_seed668_vs_coordinate_residual
+│   │   ├── biological_annotations.csv
+│   │   ├── figures
+│   │   │   ├── charge_binary_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_binary_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_binary_group_shell_mae_cluster_mean.png
+│   │   │   ├── charge_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_group_shell_mae_cluster_mean.png
+│   │   │   ├── domain_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── domain_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── domain_group_shell_mae_cluster_mean.png
+│   │   │   ├── exposure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── exposure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── exposure_group_shell_mae_cluster_mean.png
+│   │   │   ├── gly_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── gly_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── gly_group_shell_mae_cluster_mean.png
+│   │   │   ├── glypro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── glypro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── glypro_group_shell_mae_cluster_mean.png
+│   │   │   ├── length_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── length_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── length_group_shell_mae_cluster_mean.png
+│   │   │   ├── pro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── pro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── pro_group_shell_mae_cluster_mean.png
+│   │   │   ├── resolution_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── resolution_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── resolution_group_shell_mae_cluster_mean.png
+│   │   │   ├── secondary_structure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── secondary_structure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── secondary_structure_group_shell_mae_cluster_mean.png
+│   │   │   ├── substitution_size_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── substitution_size_group_perturbed_auprc_cluster_mean.png
+│   │   │   └── substitution_size_group_shell_mae_cluster_mean.png
+│   │   ├── pairwise_stratified_diff.csv
+│   │   ├── sample_metrics_with_strata.csv
+│   │   ├── stratified_metrics_long.csv
+│   │   ├── stratified_metrics_wide.csv
+│   │   ├── summary.json
+│   │   └── warnings.txt
+│   ├── v5_seed668_vs_esm_mlp
+│   │   ├── biological_annotations.csv
+│   │   ├── figures
+│   │   │   ├── charge_binary_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_binary_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_binary_group_shell_mae_cluster_mean.png
+│   │   │   ├── charge_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_group_shell_mae_cluster_mean.png
+│   │   │   ├── domain_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── domain_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── domain_group_shell_mae_cluster_mean.png
+│   │   │   ├── exposure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── exposure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── exposure_group_shell_mae_cluster_mean.png
+│   │   │   ├── gly_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── gly_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── gly_group_shell_mae_cluster_mean.png
+│   │   │   ├── glypro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── glypro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── glypro_group_shell_mae_cluster_mean.png
+│   │   │   ├── length_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── length_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── length_group_shell_mae_cluster_mean.png
+│   │   │   ├── pro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── pro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── pro_group_shell_mae_cluster_mean.png
+│   │   │   ├── resolution_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── resolution_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── resolution_group_shell_mae_cluster_mean.png
+│   │   │   ├── secondary_structure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── secondary_structure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── secondary_structure_group_shell_mae_cluster_mean.png
+│   │   │   ├── substitution_size_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── substitution_size_group_perturbed_auprc_cluster_mean.png
+│   │   │   └── substitution_size_group_shell_mae_cluster_mean.png
+│   │   ├── pairwise_stratified_diff.csv
+│   │   ├── sample_metrics_with_strata.csv
+│   │   ├── stratified_metrics_long.csv
+│   │   ├── stratified_metrics_wide.csv
+│   │   ├── summary.json
+│   │   └── warnings.txt
+│   ├── v5_seed668_vs_geometry_gnn
+│   │   ├── biological_annotations.csv
+│   │   ├── figures
+│   │   │   ├── charge_binary_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_binary_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_binary_group_shell_mae_cluster_mean.png
+│   │   │   ├── charge_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_group_shell_mae_cluster_mean.png
+│   │   │   ├── domain_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── domain_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── domain_group_shell_mae_cluster_mean.png
+│   │   │   ├── exposure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── exposure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── exposure_group_shell_mae_cluster_mean.png
+│   │   │   ├── gly_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── gly_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── gly_group_shell_mae_cluster_mean.png
+│   │   │   ├── glypro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── glypro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── glypro_group_shell_mae_cluster_mean.png
+│   │   │   ├── length_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── length_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── length_group_shell_mae_cluster_mean.png
+│   │   │   ├── pro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── pro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── pro_group_shell_mae_cluster_mean.png
+│   │   │   ├── resolution_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── resolution_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── resolution_group_shell_mae_cluster_mean.png
+│   │   │   ├── secondary_structure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── secondary_structure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── secondary_structure_group_shell_mae_cluster_mean.png
+│   │   │   ├── substitution_size_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── substitution_size_group_perturbed_auprc_cluster_mean.png
+│   │   │   └── substitution_size_group_shell_mae_cluster_mean.png
+│   │   ├── pairwise_stratified_diff.csv
+│   │   ├── sample_metrics_with_strata.csv
+│   │   ├── stratified_metrics_long.csv
+│   │   ├── stratified_metrics_wide.csv
+│   │   ├── summary.json
+│   │   └── warnings.txt
+│   ├── v5_seed668_vs_global_mean
+│   │   ├── biological_annotations.csv
+│   │   ├── figures
+│   │   │   ├── charge_binary_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_binary_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_binary_group_shell_mae_cluster_mean.png
+│   │   │   ├── charge_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_group_shell_mae_cluster_mean.png
+│   │   │   ├── domain_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── domain_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── domain_group_shell_mae_cluster_mean.png
+│   │   │   ├── exposure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── exposure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── exposure_group_shell_mae_cluster_mean.png
+│   │   │   ├── gly_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── gly_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── gly_group_shell_mae_cluster_mean.png
+│   │   │   ├── glypro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── glypro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── glypro_group_shell_mae_cluster_mean.png
+│   │   │   ├── length_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── length_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── length_group_shell_mae_cluster_mean.png
+│   │   │   ├── pro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── pro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── pro_group_shell_mae_cluster_mean.png
+│   │   │   ├── resolution_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── resolution_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── resolution_group_shell_mae_cluster_mean.png
+│   │   │   ├── secondary_structure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── secondary_structure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── secondary_structure_group_shell_mae_cluster_mean.png
+│   │   │   ├── substitution_size_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── substitution_size_group_perturbed_auprc_cluster_mean.png
+│   │   │   └── substitution_size_group_shell_mae_cluster_mean.png
+│   │   ├── pairwise_stratified_diff.csv
+│   │   ├── sample_metrics_with_strata.csv
+│   │   ├── stratified_metrics_long.csv
+│   │   ├── stratified_metrics_wide.csv
+│   │   ├── summary.json
+│   │   └── warnings.txt
+│   ├── v5_seed668_vs_mutation_type_shell_mean
+│   │   ├── biological_annotations.csv
+│   │   ├── figures
+│   │   │   ├── charge_binary_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_binary_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_binary_group_shell_mae_cluster_mean.png
+│   │   │   ├── charge_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_group_shell_mae_cluster_mean.png
+│   │   │   ├── domain_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── domain_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── domain_group_shell_mae_cluster_mean.png
+│   │   │   ├── exposure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── exposure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── exposure_group_shell_mae_cluster_mean.png
+│   │   │   ├── gly_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── gly_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── gly_group_shell_mae_cluster_mean.png
+│   │   │   ├── glypro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── glypro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── glypro_group_shell_mae_cluster_mean.png
+│   │   │   ├── length_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── length_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── length_group_shell_mae_cluster_mean.png
+│   │   │   ├── pro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── pro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── pro_group_shell_mae_cluster_mean.png
+│   │   │   ├── resolution_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── resolution_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── resolution_group_shell_mae_cluster_mean.png
+│   │   │   ├── secondary_structure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── secondary_structure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── secondary_structure_group_shell_mae_cluster_mean.png
+│   │   │   ├── substitution_size_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── substitution_size_group_perturbed_auprc_cluster_mean.png
+│   │   │   └── substitution_size_group_shell_mae_cluster_mean.png
+│   │   ├── pairwise_stratified_diff.csv
+│   │   ├── sample_metrics_with_strata.csv
+│   │   ├── stratified_metrics_long.csv
+│   │   ├── stratified_metrics_wide.csv
+│   │   ├── summary.json
+│   │   └── warnings.txt
+│   ├── v5_seed668_vs_shell_mean
+│   │   ├── biological_annotations.csv
+│   │   ├── figures
+│   │   │   ├── charge_binary_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_binary_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_binary_group_shell_mae_cluster_mean.png
+│   │   │   ├── charge_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── charge_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── charge_group_shell_mae_cluster_mean.png
+│   │   │   ├── domain_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── domain_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── domain_group_shell_mae_cluster_mean.png
+│   │   │   ├── exposure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── exposure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── exposure_group_shell_mae_cluster_mean.png
+│   │   │   ├── gly_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── gly_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── gly_group_shell_mae_cluster_mean.png
+│   │   │   ├── glypro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── glypro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── glypro_group_shell_mae_cluster_mean.png
+│   │   │   ├── length_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── length_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── length_group_shell_mae_cluster_mean.png
+│   │   │   ├── pro_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── pro_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── pro_group_shell_mae_cluster_mean.png
+│   │   │   ├── resolution_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── resolution_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── resolution_group_shell_mae_cluster_mean.png
+│   │   │   ├── secondary_structure_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── secondary_structure_group_perturbed_auprc_cluster_mean.png
+│   │   │   ├── secondary_structure_group_shell_mae_cluster_mean.png
+│   │   │   ├── substitution_size_group_mae_shell_4_cluster_mean.png
+│   │   │   ├── substitution_size_group_perturbed_auprc_cluster_mean.png
+│   │   │   └── substitution_size_group_shell_mae_cluster_mean.png
+│   │   ├── pairwise_stratified_diff.csv
+│   │   ├── sample_metrics_with_strata.csv
+│   │   ├── stratified_metrics_long.csv
+│   │   ├── stratified_metrics_wide.csv
+│   │   ├── summary.json
+│   │   └── warnings.txt
+│   └── v5_seed668_vs_zero_response
+│       ├── biological_annotations.csv
+│       ├── figures
+│       │   ├── charge_binary_group_mae_shell_4_cluster_mean.png
+│       │   ├── charge_binary_group_perturbed_auprc_cluster_mean.png
+│       │   ├── charge_binary_group_shell_mae_cluster_mean.png
+│       │   ├── charge_group_mae_shell_4_cluster_mean.png
+│       │   ├── charge_group_perturbed_auprc_cluster_mean.png
+│       │   ├── charge_group_shell_mae_cluster_mean.png
+│       │   ├── domain_group_mae_shell_4_cluster_mean.png
+│       │   ├── domain_group_perturbed_auprc_cluster_mean.png
+│       │   ├── domain_group_shell_mae_cluster_mean.png
+│       │   ├── exposure_group_mae_shell_4_cluster_mean.png
+│       │   ├── exposure_group_perturbed_auprc_cluster_mean.png
+│       │   ├── exposure_group_shell_mae_cluster_mean.png
+│       │   ├── gly_group_mae_shell_4_cluster_mean.png
+│       │   ├── gly_group_perturbed_auprc_cluster_mean.png
+│       │   ├── gly_group_shell_mae_cluster_mean.png
+│       │   ├── glypro_group_mae_shell_4_cluster_mean.png
+│       │   ├── glypro_group_perturbed_auprc_cluster_mean.png
+│       │   ├── glypro_group_shell_mae_cluster_mean.png
+│       │   ├── length_group_mae_shell_4_cluster_mean.png
+│       │   ├── length_group_perturbed_auprc_cluster_mean.png
+│       │   ├── length_group_shell_mae_cluster_mean.png
+│       │   ├── pro_group_mae_shell_4_cluster_mean.png
+│       │   ├── pro_group_perturbed_auprc_cluster_mean.png
+│       │   ├── pro_group_shell_mae_cluster_mean.png
+│       │   ├── resolution_group_mae_shell_4_cluster_mean.png
+│       │   ├── resolution_group_perturbed_auprc_cluster_mean.png
+│       │   ├── resolution_group_shell_mae_cluster_mean.png
+│       │   ├── secondary_structure_group_mae_shell_4_cluster_mean.png
+│       │   ├── secondary_structure_group_perturbed_auprc_cluster_mean.png
+│       │   ├── secondary_structure_group_shell_mae_cluster_mean.png
+│       │   ├── substitution_size_group_mae_shell_4_cluster_mean.png
+│       │   ├── substitution_size_group_perturbed_auprc_cluster_mean.png
+│       │   └── substitution_size_group_shell_mae_cluster_mean.png
+│       ├── pairwise_stratified_diff.csv
+│       ├── sample_metrics_with_strata.csv
+│       ├── stratified_metrics_long.csv
+│       ├── stratified_metrics_wide.csv
+│       ├── summary.json
+│       └── warnings.txt
+├── context_ablation_valid
+│   └── no_context_419952
+│       ├── cluster_metrics.csv
+│       ├── pairwise_cluster_diffs.csv
+│       ├── statistical_tests.csv
+│       ├── strict_baseline_summary.json
+│       └── summary_metrics.csv
+├── coordinate_residual
+│   ├── eval_test.json
+│   └── predictions_test.csv
+├── esm_mlp
+│   ├── eval_test.json
+│   ├── predictions_test.csv
+│   └── trainer_state.json
+├── geometry_gnn
+│   ├── eval_test.json
+│   └── predictions_test.csv
+├── geometry_gnn_time
+│   ├── cluster_metrics_test.csv
+│   ├── cluster_metrics_valid.csv
+│   ├── eval_test.json
+│   ├── eval_valid.json
+│   ├── predictions_test.csv
+│   ├── predictions_valid.csv
+│   ├── sample_metrics_test.csv
+│   ├── sample_metrics_valid.csv
+│   └── trainer_state.json
+├── global_mean
+│   ├── baseline_stats.json
+│   ├── eval_test.json
+│   └── predictions_test.csv
+├── mechanism_closure_seed42
+│   ├── cluster_metrics.csv
+│   ├── pairwise_cluster_diffs.csv
+│   ├── statistical_tests.csv
+│   ├── strict_baseline_summary.json
+│   └── summary_metrics.csv
+├── mutation_type_shell_mean
+│   ├── baseline_stats.json
+│   ├── eval_test.json
+│   └── predictions_test.csv
+├── mutation_type_shell_mean_time
+│   ├── baseline_stats.json
+│   ├── eval_test.json
+│   ├── eval_valid.json
+│   ├── predictions_test.csv
+│   └── predictions_valid.csv
+├── shell_mean
+│   ├── baseline_stats.json
+│   ├── eval_test.json
+│   └── predictions_test.csv
+├── shell_mean_time
+│   ├── baseline_stats.json
+│   ├── eval_test.json
+│   ├── eval_valid.json
+│   ├── predictions_test.csv
+│   └── predictions_valid.csv
+├── strict_baseline_comparison_base_v5_seed101
+│   ├── cluster_metrics.csv
+│   ├── pairwise_cluster_diffs.csv
+│   ├── statistical_tests.csv
+│   ├── strict_baseline_summary.json
+│   └── summary_metrics.csv
+├── strict_baseline_comparison_base_v5_seed42
+│   ├── cluster_metrics.csv
+│   ├── pairwise_cluster_diffs.csv
+│   ├── statistical_tests.csv
+│   ├── strict_baseline_summary.json
+│   └── summary_metrics.csv
+├── strict_baseline_comparison_base_v5_seed668
+│   ├── cluster_metrics.csv
+│   ├── pairwise_cluster_diffs.csv
+│   ├── statistical_tests.csv
+│   ├── strict_baseline_summary.json
+│   └── summary_metrics.csv
+├── threshold_sensitivity.csv
+├── threshold_sensitivity_valid.csv
+├── time_split_comparison
+│   ├── cluster_metrics.csv
+│   ├── pairwise_cluster_diffs.csv
+│   ├── statistical_tests.csv
+│   ├── strict_baseline_summary.json
+│   └── summary_metrics.csv
+└── zero_response
+    ├── baseline_stats.json
+    ├── eval_test.json
+    └── predictions_test.csv

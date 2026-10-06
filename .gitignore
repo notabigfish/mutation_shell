@@ -165,3 +165,5 @@ wandb/
 __pycache__/
 .ipynb_checkpoints/
 results/
+backup/
+debug_todo_exp.md

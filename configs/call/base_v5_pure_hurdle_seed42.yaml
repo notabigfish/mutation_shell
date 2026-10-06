@@ -28,7 +28,7 @@ model:
   dropout: 0.1
   num_classes: 3
   response_mode: pure_hurdle
-  use_mutation_context: false
+  use_mutation_context: true
 train:
   epochs: 80
   lr: 0.0001
