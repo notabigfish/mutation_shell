@@ -232,16 +232,43 @@ def main():
     )
     cases.append(enrich_and_choose('case3_nonlocal', c, used))
 
-    d = all_cases[
-        all_cases.length.between(150, 250)
-        & all_cases.background_mean.between(0.3, 0.6)
-        & (all_cases.background_sd <= 0.15)
-        & (all_cases.near_max_displacement >= 2.0)
-        & ((all_cases.near_mae_global - all_cases.near_mae) >= 0.10)
-        & ((all_cases.near_mae_direct - all_cases.near_mae) >= 0.10)
-    ].copy()
-    d['mechanism_gain'] = (d.near_mae_global + d.near_mae_direct) / 2 - d.near_mae
-    d = d.sort_values('mechanism_gain', ascending=False)
+    # Case 4: require an observed proximal rearrangement. Rank the available
+    # examples by measured ablation improvements and background properties.
+    case4_length = all_cases.length.between(150, 250)
+    case4_near = all_cases.near_max_displacement.ge(2.0)
+    d = all_cases.loc[case4_length & case4_near].copy()
+    d['gain_global'] = d.near_mae_global - d.near_mae
+    d['gain_direct'] = d.near_mae_direct - d.near_mae
+    d['min_near_gain'] = np.minimum(d.gain_global, d.gain_direct)
+    d['both_better'] = d.min_near_gain.gt(0.0)
+    d['both_strong'] = d.min_near_gain.ge(0.10)
+    d['target_background'] = d.background_mean.between(0.3, 0.6)
+    d['stable_background'] = d.background_sd.le(0.15)
+    d['mechanism_gain'] = (d.gain_global + d.gain_direct) / 2
+
+    case4_counts = pd.DataFrame([
+        {'stage': 'all_annotated', 'count': len(all_cases)},
+        {'stage': 'length_150_to_250', 'count': int(case4_length.sum())},
+        {'stage': 'plus_proximal_displacement_ge_2A', 'count': len(d)},
+        {'stage': 'plus_background_mean_0.3_to_0.6',
+         'count': int(d.target_background.sum())},
+        {'stage': 'plus_background_sd_le_0.15',
+         'count': int((d.target_background & d.stable_background).sum())},
+        {'stage': 'both_proximal_gains_positive',
+         'count': int(d.both_better.sum())},
+        {'stage': 'both_proximal_gains_ge_0.10A',
+         'count': int(d.both_strong.sum())},
+        {'stage': 'original_all_conditions',
+         'count': int((d.target_background & d.stable_background & d.both_strong).sum())},
+    ])
+    case4_counts.to_csv(OUT / 'case4_filter_counts.csv', index=False)
+    print(case4_counts.to_string(index=False))
+
+    d = d.sort_values(
+        ['both_strong', 'both_better', 'target_background',
+         'stable_background', 'min_near_gain', 'background_sd', 'sample_id'],
+        ascending=[False, False, False, False, False, True, True],
+    )
     cases.append(enrich_and_choose('case4_mechanism', d, used))
 
     pd.DataFrame(cases).to_csv(OUT / 'selected_cases.csv', index=False)
