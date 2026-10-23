@@ -189,17 +189,47 @@ def main():
     )
     cases.append(enrich_and_choose('case1_comparison', a, used, verify_crystal=True))
 
-    b = all_cases[
+    # Case 2: keep the experimental Local definition as an inclusion criterion.
+    # Predicted class and radius accuracy determine ranking, not ground truth.
+    b = all_cases.loc[
         (all_cases.true_class == 1) & (all_cases.true_radius <= 8.0)
-        & (all_cases.pred_class == 1) & (all_cases.radius_error < 2.0)
-    ].sort_values(['radius_error', 'auprc'], ascending=[True, False])
+    ].copy()
+    b['class_correct'] = b.pred_class.eq(1)
+    b['radius_within_2A'] = b.radius_error.lt(2.0)
+    local_counts = pd.DataFrame([
+        {'stage': 'true_local', 'count': len(b)},
+        {'stage': 'predicted_local', 'count': int(b.class_correct.sum())},
+        {'stage': 'radius_error_under_2A', 'count': int(b.radius_within_2A.sum())},
+        {'stage': 'both_requirements', 'count': int((b.class_correct & b.radius_within_2A).sum())},
+    ])
+    local_counts.to_csv(OUT / 'case2_filter_counts.csv', index=False)
+    print(local_counts.to_string(index=False))
+    b = b.sort_values(
+        ['class_correct', 'radius_error', 'auprc', 'near_mae'],
+        ascending=[False, True, False, True],
+    )
     cases.append(enrich_and_choose('case2_local', b, used))
 
-    c = all_cases[
+    # Case 3: retain genuinely non-local experimental responses.
+    # Prefer correct class/radius predictions without fabricating radius accuracy.
+    c = all_cases.loc[
         (all_cases.true_class == 2) & (all_cases.true_radius > 12.0)
-        & (all_cases.n_far_s2_s3 >= 3) & (all_cases.pred_class == 2)
-        & (all_cases.radius_error < 2.0)
-    ].sort_values(['n_far_s4', 'radius_error', 'auprc'], ascending=[False, True, False])
+        & (all_cases.n_far_s2_s3 >= 3)
+    ].copy()
+    c['class_correct'] = c.pred_class.eq(2)
+    c['radius_within_2A'] = c.radius_error.lt(2.0)
+    nonlocal_counts = pd.DataFrame([
+        {'stage': 'true_nonlocal_with_far_response', 'count': len(c)},
+        {'stage': 'predicted_nonlocal', 'count': int(c.class_correct.sum())},
+        {'stage': 'radius_error_under_2A', 'count': int(c.radius_within_2A.sum())},
+        {'stage': 'both_requirements', 'count': int((c.class_correct & c.radius_within_2A).sum())},
+    ])
+    nonlocal_counts.to_csv(OUT / 'case3_filter_counts.csv', index=False)
+    print(nonlocal_counts.to_string(index=False))
+    c = c.sort_values(
+        ['class_correct', 'radius_within_2A', 'radius_error', 'n_far_s2_s3', 'auprc'],
+        ascending=[False, False, True, False, False],
+    )
     cases.append(enrich_and_choose('case3_nonlocal', c, used))
 
     d = all_cases[
@@ -215,7 +245,10 @@ def main():
     cases.append(enrich_and_choose('case4_mechanism', d, used))
 
     pd.DataFrame(cases).to_csv(OUT / 'selected_cases.csv', index=False)
-    print(pd.DataFrame(cases)[['case', 'sample_id', 'cluster_id_30', 'length', 'auprc', 'shell_mae']].to_string(index=False))
+    print(pd.DataFrame(cases)[[
+        'case', 'sample_id', 'cluster_id_30', 'true_class', 'pred_class',
+        'true_radius', 'pred_radius', 'radius_error', 'auprc', 'shell_mae',
+    ]].to_string(index=False))
 
 
 if __name__ == '__main__':
