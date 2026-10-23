@@ -167,3 +167,6 @@ __pycache__/
 results/
 backup/
 debug_todo_exp.md
+figures/
+compact_results/
+compact_results.tar.gz
