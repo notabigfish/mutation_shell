@@ -18,12 +18,26 @@ MODEL_PATHS = {
     'direct': PRED / 'base_v5_direct_seed42/predictions_test.csv',
     'pure_hurdle': PRED / 'base_v5_pure_hurdle_seed42/predictions_test.csv',
 }
-
+METRIC_COLUMNS = (
+    'sample_id',
+    'cluster_id_30',
+    'residue_index',
+    'true_displacement',
+    'pred_displacement',
+    'pred_perturbed_prob',
+    'shell_id',
+    'radii',
+)
 
 def sample_groups(path: Path, chunksize: int = 250000):
     """Stream contiguous per-sample rows, including across CSV chunk boundaries."""
     carry = None
-    for chunk in pd.read_csv(path, chunksize=chunksize, dtype={'sample_id': str, 'cluster_id_30': str}):
+    for chunk in pd.read_csv(
+        path,
+        chunksize=chunksize,
+        usecols=METRIC_COLUMNS,
+        dtype={'sample_id': str, 'cluster_id_30': str},
+    ):
         if carry is not None:
             chunk = pd.concat([carry, chunk], ignore_index=True)
         sid = chunk['sample_id'].iat[-1]
@@ -90,8 +104,23 @@ def sample_metrics(group: pd.DataFrame) -> dict:
     return result
 
 
-def scan_model(name: str) -> pd.DataFrame:
-    frames = [sample_metrics(group) for _, group in sample_groups(MODEL_PATHS[name])]
+def scan_model(
+    name: str,
+    *,
+    progress: bool = False,
+    position: int = 0,
+) -> pd.DataFrame:
+    with tqdm(
+        sample_groups(MODEL_PATHS[name]),
+        desc=f'{name}: sample metrics',
+        unit='sample',
+        position=position,
+        mininterval=0.5,
+        leave=True,
+        disable=not progress,
+    ) as groups:
+        frames = [sample_metrics(group) for _, group in groups]
+
     return pd.DataFrame(frames)
 
 

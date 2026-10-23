@@ -5,7 +5,9 @@ import gzip
 import re
 import sys
 from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import os
+from multiprocessing import RLock
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from tqdm.auto import tqdm
 import numpy as np
 import pandas as pd
@@ -78,10 +80,22 @@ def main():
 
     results = {}
 
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    progress_lock = RLock()
+    tqdm.set_lock(progress_lock)
+
+    with ProcessPoolExecutor(
+        max_workers=min(3, os.cpu_count() or 1),
+        initializer=tqdm.set_lock,
+        initargs=(progress_lock,),
+    ) as executor:
         futures = {
-            executor.submit(scan_model, name): name
-            for name in model_names
+            executor.submit(
+                scan_model,
+                name,
+                progress=True,
+                position=i + 1,
+            ): name
+            for i, name in enumerate(model_names)
         }
 
         for future in tqdm(
@@ -89,6 +103,7 @@ def main():
             total=len(futures),
             desc='Scanning models',
             unit='model',
+            position=0,
         ):
             name = futures[future]
             results[name] = future.result()
