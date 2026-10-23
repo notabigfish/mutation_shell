@@ -43,7 +43,8 @@ def enrich_and_choose(label: str, candidates: pd.DataFrame, used_clusters: set[s
                       verify_crystal: bool = False) -> dict:
     print(f'{label}: {len(candidates)} numeric candidates')
     OUT.mkdir(parents=True, exist_ok=True)
-    candidates.head(1000).to_csv(OUT / f'candidates_{label}.csv', index=False)
+    candidates.to_csv(OUT / f'candidates_{label}.csv', index=False)
+    rejected = {'used_cluster': 0, 'chain_break': 0, 'crystal_resolution': 0}
     for row in tqdm(
         candidates.itertuples(index=False),
         total=len(candidates),
@@ -51,21 +52,27 @@ def enrich_and_choose(label: str, candidates: pd.DataFrame, used_clusters: set[s
         unit='candidate',
     ):
         if str(row.cluster_id_30) in used_clusters:
+            rejected['used_cluster'] += 1
             continue
         if not contiguous(str(row.sample_id)):
+            rejected['chain_break'] += 1
             continue
         rec = row._asdict()
         if verify_crystal:
             wt_res = crystal_resolution(str(row.wt_pdb_id))
             mut_res = crystal_resolution(str(row.mut_pdb_id))
             if not (np.isfinite(wt_res) and wt_res < 2.0 and np.isfinite(mut_res) and mut_res < 2.0):
+                rejected['crystal_resolution'] += 1
                 continue
             rec['wt_resolution'] = wt_res
             rec['mut_resolution'] = mut_res
         used_clusters.add(str(row.cluster_id_30))
         rec['case'] = label
         return rec
-    raise RuntimeError(f'No physically continuous {label} case passed all conditions; inspect candidates_{label}.csv')
+    raise RuntimeError(
+        f'{label}: {len(candidates)} numeric candidates, none passed structural checks. '
+        f'Rejections: {rejected}. See candidates_{label}.csv.'
+    )
 
 
 def main():
@@ -129,18 +136,57 @@ def main():
 
     cases = []
     used = set()
-    a = all_cases[
-        (all_cases.exposure_group == 'buried') & (all_cases.charge_group == 'neutral_to_charged')
-        & (all_cases.resolution < 2.0) & all_cases.length.between(120, 300)
+    # Mutation-site exposure and charge-change subgroups were assessed separately
+    # in the stratification analysis. Their intersection is preferred, not required.
+    buried = all_cases.exposure_group.eq('buried')
+    charge = all_cases.charge_group.eq('neutral_to_charged')
+    joint = buried & charge
+    either = buried | charge
+
+    structure = (
+        all_cases.resolution.lt(2.0)
+        & all_cases.length.between(120, 300)
         & all_cases.max_true_displacement.between(2.0, 4.5)
         & all_cases.n_perturbed.between(5, 20)
-        & (all_cases.longest_perturbed_run >= 3)
-        & (all_cases.secondary_structure_group.isin(['loop', 'helix']))
-        & (all_cases.auprc > 0.65) & ((all_cases.auprc - all_cases.auprc_geometry) > 0.20)
-        & (all_cases.shell_mae < 0.35) & ((all_cases.shell_mae_coordinate - all_cases.shell_mae) > 0.20)
-    ].copy()
+        & all_cases.longest_perturbed_run.ge(3)
+    )
+    improvement = (
+        all_cases.auprc.gt(all_cases.auprc_geometry)
+        & all_cases.shell_mae.lt(all_cases.shell_mae_coordinate)
+    )
+    original_metrics = (
+        all_cases.auprc.gt(0.65)
+        & (all_cases.auprc - all_cases.auprc_geometry).gt(0.20)
+        & all_cases.shell_mae.lt(0.35)
+        & (all_cases.shell_mae_coordinate - all_cases.shell_mae).gt(0.20)
+    )
+
+    counts = pd.DataFrame([
+        {'stage': 'all_annotated', 'count': len(all_cases)},
+        {'stage': 'buried_and_neutral_to_charged', 'count': int(joint.sum())},
+        {'stage': 'either_subgroup_and_structure', 'count': int((either & structure).sum())},
+        {'stage': 'either_subgroup_structure_and_improvement', 'count': int((either & structure & improvement).sum())},
+        {'stage': 'original_all_conditions', 'count': int((
+            joint & structure & original_metrics
+            & all_cases.secondary_structure_group.isin(['loop', 'helix'])
+        ).sum())},
+    ])
+    counts.to_csv(OUT / 'case1_filter_counts.csv', index=False)
+    print(counts.to_string(index=False))
+
+    a = all_cases.loc[either & structure & improvement].copy()
+    a['joint_subgroup'] = joint.loc[a.index].astype(int)
+    a['case1_subgroup'] = np.select(
+        [joint.loc[a.index], buried.loc[a.index]],
+        ['buried+neutral_to_charged', 'buried'],
+        default='neutral_to_charged',
+    )
     a['primary_advantage'] = a.auprc - a.auprc_geometry
-    a = a.sort_values(['primary_advantage', 'shell_mae'], ascending=[False, True])
+    a['coordinate_advantage'] = a.shell_mae_coordinate - a.shell_mae
+    a = a.sort_values(
+        ['joint_subgroup', 'primary_advantage', 'auprc', 'coordinate_advantage'],
+        ascending=[False, False, False, False],
+    )
     cases.append(enrich_and_choose('case1_comparison', a, used, verify_crystal=True))
 
     b = all_cases[
