@@ -15,7 +15,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
-from Bio.PDB import MMCIFParser, PDBIO
+from Bio.PDB import PDBIO
+from Bio.PDB.Atom import Atom
+from Bio.PDB.Residue import Residue
 from Bio.PDB.Chain import Chain
 from Bio.PDB.Model import Model
 from Bio.PDB.Structure import Structure
@@ -30,20 +32,52 @@ from musrnet.train_utils import load_yaml
 from common import OUT, MODEL_PATHS, selected_prediction_rows
 
 
-def read_cif(path: Path, chain_id: str):
-    with gzip.open(path, 'rt') as fh:
-        structure = MMCIFParser(QUIET=True).get_structure('original', fh)
-    return structure[0][chain_id]
+def ordered_residues(chain_df, residue_info):
+    df = chain_df.copy()
+    df['insertion'] = (
+        df['insertion']
+        .fillna('')
+        .astype(str)
+        .str.strip()
+        .replace({'.': '', '?': '', 'None': ''})
+    )
 
+    residues = []
 
-def ordered_residues(chain, residue_info):
-    atoms = [r for r in chain.get_residues() if 'CA' in r]
-    chosen = []
     for info in residue_info:
-        hit = next(r for r in atoms if int(r.id[1]) == int(info['pdb_number'])
-                   and str(r.id[2]).strip() == str(info['icode']))
-        chosen.append(hit)
-    return chosen
+        atoms = df[
+            (df['residue_number'] == info['pdb_number'])
+            & (df['insertion'] == info['icode'])
+        ].drop_duplicates(subset=['atom_name'], keep='first')
+
+        residue = Residue(
+            (' ', int(info['pdb_number']), info['icode'] or ' '),
+            str(atoms.iloc[0]['residue_name']),
+            ''
+        )
+
+        for atom in atoms.itertuples(index=False):
+            name = str(atom.atom_name)
+
+            residue.add(
+                Atom(
+                    name,
+                    np.array(
+                        [atom.Cartn_x, atom.Cartn_y, atom.Cartn_z],
+                        dtype=np.float32
+                    ),
+                    float(atom.B_iso_or_equiv),
+                    float(atom.occupancy),
+                    ' ',
+                    f'{name:4s}',
+                    0,
+                    element=str(atom.type_symbol)
+                )
+            )
+
+        residues.append(residue)
+
+    return residues
 
 
 def save_aligned_chain(residues, path, rotation=None, translation=None, b=None):
@@ -92,7 +126,7 @@ def main():
     predictions = {name: selected_prediction_rows(MODEL_PATHS[name], ids).set_index(['sample_id', 'residue_index'])
                    for name in MODEL_PATHS}
     fold = pd.read_csv(OUT / 'fold_residue_fields.csv', dtype={'sample_id': str})
-    fold = fold[fold.sample_id.isin(ids)].set_index(['sample_id', 'model', 'residue_index'])
+    fold = fold[fold.sample_id.isin(ids)].set_index(['sample_id', 'model', 'residue_index']).sort_index()
     manifest = load_samples_manifest('data/processed/samples.pt')
     annotations = []
 
@@ -140,8 +174,15 @@ def main():
         pdb_version = args.pdb_dir.parent.name
         wt_info = inspect_chain(wt_file, s['wt_chain_id'], 'mmcif', pdb_root, pdb_version)
         mut_info = inspect_chain(mut_file, s['mut_chain_id'], 'mmcif', pdb_root, pdb_version)
-        wt_res = ordered_residues(read_cif(wt_file, s['wt_chain_id']), wt_info['residues'])
-        mut_res = ordered_residues(read_cif(mut_file, s['mut_chain_id']), mut_info['residues'])
+        wt_res = ordered_residues(
+            wt_info['chain_df'],
+            wt_info['residues']
+        )
+
+        mut_res = ordered_residues(
+            mut_info['chain_df'],
+            mut_info['residues']
+        )
         assert len(wt_res) == len(mut_res) == L
         wt_ca = np.array([r['CA'].coord for r in wt_res]); mut_ca = np.array([r['CA'].coord for r in mut_res])
         assert np.max(np.abs(wt_ca - s['coords_wt'].numpy())) < 0.01
