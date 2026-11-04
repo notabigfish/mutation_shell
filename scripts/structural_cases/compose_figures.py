@@ -13,7 +13,7 @@ from matplotlib.gridspec import GridSpec, GridSpecFromSubplotSpec
 from common import OUT
 
 C = {'truth':'#18181B','musrnet':'#BE123C','geometry':'#0D9488',
-     'coordinate':'#7C3AED','af2':'#94A3B8','esmfold':'#D97706',
+     'coordinate':'#7C3AED','af3':'#94A3B8','esmfold2':'#D97706',
      'global_loss':'#0284C7','direct':'#64748B','pure_hurdle':'#D97706'}
 plt.rcParams.update({'font.family':'sans-serif','font.sans-serif':['Arial','Helvetica','DejaVu Sans'],
     'font.size':8.5,'axes.titlesize':10,'axes.labelsize':10,'xtick.labelsize':8.5,
@@ -70,7 +70,7 @@ def main_figure():
 
     b=GridSpecFromSubplotSpec(1,5,subplot_spec=gs[0,1],wspace=.02)
     names=[('true','Experimental'),('musrnet','MuSRNet'),('geometry','Geometry GNN'),
-           ('coordinate','Coordinate residual'),('af2','AlphaFold2')]
+           ('coordinate','Coordinate residual'),('af3','AlphaFold3')]
     for i,(field,title) in enumerate(names):
         ax=fig.add_subplot(b[i])
         show(ax,case1/(field+'.png'),title)
@@ -88,7 +88,7 @@ def main_figure():
         k=int(row.shell_id)
         if k in shade:
             for ax in (ac0,ac1): ax.axvspan(i+.5,i+1.5,color=shade[k],alpha=.18,lw=0)
-    for field,style in [('true','-'),('musrnet','-'),('geometry','--'),('coordinate','-.'),('af2',':')]:
+    for field,style in [('true','-'),('musrnet','-'),('geometry','--'),('coordinate','-.'),('af3',':')]:
         ac0.plot(x.position,x[field],style,lw=1.15,color=C[field],label=field.replace('_',' ').title())
     ac0.axhline(1,color='#888',ls=':',lw=.7)
     ac0.set_ylabel(r'$d_i$ ($\mathrm{\AA}$)')
@@ -103,8 +103,8 @@ def main_figure():
 
     d=GridSpecFromSubplotSpec(1,3,subplot_spec=gs[1,1],wspace=.36,width_ratios=[1,1,1])
     metrics=pd.read_csv(OUT/'fold_baseline_summary.csv')
-    order=['musrnet','geometry','coordinate','esmfold','af2']
-    labels=['MuSRNet','Geometry','Coord.','ESMFold','AF2']
+    order=['musrnet','geometry','coordinate','esmfold2','af3']
+    labels=['MuSRNet','Geometry','Coord.','ESMFold2','AF3']
     for i,metric in enumerate(['shell_mae','auprc']):
         ax=fig.add_subplot(d[i]);sub=metrics[metrics.metric==metric].set_index('model').loc[order]
         vals=sub.cluster_mean.to_numpy(float)
@@ -115,8 +115,8 @@ def main_figure():
         ax.set_title('Cluster shell-MAE' if i==0 else 'Cluster AUPRC',fontsize=8.5)
         tidy(ax)
         if i==0:letter(fig,ax,'d')
-    ax=fig.add_subplot(d[2]);subset=f[f.model.isin(['musrnet','af2','esmfold'])]
-    for key in ('musrnet','esmfold','af2'):
+    ax=fig.add_subplot(d[2]);subset=f[f.model.isin(['musrnet','af3','esmfold2'])]
+    for key in ('musrnet','esmfold2','af3'):
         df=subset[subset.model==key]
         ax.scatter(df.max_true_disp,df.max_pred_disp,color=C[key],s=6,alpha=.45,label=key)
     lim=float(max(subset.max_true_disp.max(),subset.max_pred_disp.quantile(.98)))

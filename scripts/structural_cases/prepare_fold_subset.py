@@ -27,20 +27,15 @@ def main():
         assert cluster_by_id[str(r.sample_id)] == str(r.cluster_id_30)
         first[str(r.cluster_id_30)] = str(r.sample_id)
     assert len(first) == 221, f'Expected 221 test clusters, got {len(first)}'
-    fasta_dir = OUT / 'af2_fasta'
-    fasta_dir.mkdir(parents=True, exist_ok=True)
     rows = []
     for i, (cluster, sid) in enumerate(first.items(), start=1):
         s = torch.load(Path(manifest['samples_dir']) / f'{sid}.pt', map_location='cpu', weights_only=False)
         key = f'pair{i:04d}'
-        for variant in ('wt', 'mut'):
-            seq = s['wt_sequence'] if variant == 'wt' else s['mut_sequence']
-            (fasta_dir / f'{key}_{variant}.fasta').write_text(f'>{key}_{variant}\n{seq}\n')
         rows.append({'fold_key': key, 'sample_id': sid, 'cluster_id_30': cluster,
                      'wt_sequence': s['wt_sequence'], 'mut_sequence': s['mut_sequence'],
                      'mut_pos': int(s['mut_pos']), 'length': len(s['wt_sequence'])})
     pd.DataFrame(rows).to_csv(OUT / 'fold_subset_221.csv', index=False)
-    print(f'Wrote {len(rows)} WT/Mut pairs and {len(rows)*2} FASTA files')
+    print(f'Wrote {len(rows)} WT/Mut pairs')
 
 
 if __name__ == '__main__':

@@ -119,7 +119,7 @@ save(str(root/'overlay.png'))
 cmd.zoom('mut and resi '+'+'.join(str(j+1) for j in strong), buffer=4.0)
 save(str(root/'zoom.png'))
 cmd.delete('all')
-for field in ('true','musrnet','geometry','coordinate','af2'):
+for field in ('true','musrnet','geometry','coordinate','af3'):
     cmd.load(str(root/'wt_'+field+'.pdb'),'model')
     cmd.show('cartoon','model')
     paint('model',rows,field)

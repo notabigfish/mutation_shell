@@ -111,7 +111,7 @@ def main():
             assert len(this) == L, (row.sample_id, name)
             frame[name] = this.pred_displacement.to_numpy(float)
             frame[f'prob_{name}'] = this.pred_perturbed_prob.to_numpy(float)
-        for model in ('af2', 'esmfold'):
+        for model in ('af3', 'esmfold2'):
             this = fold.loc[(row.sample_id, model)].sort_index()
             frame[model] = this.pred_displacement.to_numpy(float)
         frame['score'] = frame.prob_musrnet * frame.musrnet
@@ -150,7 +150,7 @@ def main():
         assert np.max(np.abs(aligned - s['coords_wt_aligned'].numpy())) < 0.01
         save_aligned_chain(wt_res, case_dir / 'wt.pdb', rotation, translation)
         save_aligned_chain(mut_res, case_dir / 'mut.pdb')
-        for field in ('true', 'musrnet', 'geometry', 'coordinate', 'af2', 'esmfold',
+        for field in ('true', 'musrnet', 'geometry', 'coordinate', 'af3', 'esmfold2',
                       'background', 'gated_excess', 'abs_error_full', 'abs_error_global'):
             if field in frame:
                 save_aligned_chain(wt_res, case_dir / f'wt_{field}.pdb', rotation, translation,

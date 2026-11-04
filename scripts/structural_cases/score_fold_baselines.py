@@ -1,4 +1,4 @@
-"""Score paired WT/Mut ESMFold and AF2 differential conformations and internal models."""
+"""Score paired WT/Mut ESMFold2 and AlphaFold3 differential conformations."""
 from __future__ import annotations
 
 import sys
@@ -7,23 +7,17 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
-from Bio.PDB import PDBParser
+from Bio.PDB import MMCIFParser
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from musrnet.alignment import kabsch_align
 from common import OUT, MODEL_PATHS, selected_prediction_rows, shell_mae, auprc, correlation, ci95
 
 
-def ca_from_pdb(path: Path) -> np.ndarray:
-    structure = PDBParser(QUIET=True).get_structure('pred', str(path))
-    residues = [r for r in next(structure.get_models()).get_residues() if 'CA' in r]
+def ca_from_cif(path: Path) -> np.ndarray:
+    structure = MMCIFParser(QUIET=True).get_structure('pred', str(path))
+    residues = [r for r in structure[0]['A'].get_residues() if 'CA' in r]
     return np.asarray([r['CA'].coord for r in residues], dtype=np.float64)
-
-
-def af2_file(key: str, tag: str) -> Path:
-    matches = sorted((OUT / 'af2_predictions').glob(f'{key}_{tag}*rank_001*.pdb'))
-    assert len(matches) == 1, f'{key}_{tag}: expected one rank_001 AF2 PDB, got {len(matches)}'
-    return matches[0]
 
 
 def row_metrics(sid, cluster, model, d, pred, shell, score):
@@ -51,13 +45,13 @@ def main():
             pred = frame.pred_displacement.to_numpy(float)
             score = frame.pred_perturbed_prob.to_numpy(float)
             rows.append(row_metrics(item.sample_id, item.cluster_id_30, model, d, pred, shell, score))
-        for model in ('esmfold', 'af2'):
-            if model == 'esmfold':
-                pred_wt = ca_from_pdb(OUT / 'esmfold_predictions' / f'{item.fold_key}_wt.pdb')
-                pred_mut = ca_from_pdb(OUT / 'esmfold_predictions' / f'{item.fold_key}_mut.pdb')
+        for model in ('esmfold2', 'af3'):
+            if model == 'esmfold2':
+                pred_wt = ca_from_cif(OUT / 'esmfold2_predictions' / f'{item.fold_key}_wt.cif')
+                pred_mut = ca_from_cif(OUT / 'esmfold2_predictions' / f'{item.fold_key}_mut.cif')
             else:
-                pred_wt = ca_from_pdb(af2_file(item.fold_key, 'wt'))
-                pred_mut = ca_from_pdb(af2_file(item.fold_key, 'mut'))
+                pred_wt = ca_from_cif(OUT / 'af3_predictions' / f'{item.fold_key}_wt' / f'{item.fold_key}_wt_model.cif')
+                pred_mut = ca_from_cif(OUT / 'af3_predictions' / f'{item.fold_key}_mut' / f'{item.fold_key}_mut_model.cif')
             assert len(pred_wt) == len(pred_mut) == L, item.sample_id
             r = np.linalg.norm(pred_wt - pred_wt[item.mut_pos], axis=1)
             aligned, _, _ = kabsch_align(pred_wt, pred_mut, r > 4.0)
