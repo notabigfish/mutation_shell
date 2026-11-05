@@ -120,7 +120,7 @@ cmd.zoom('mut and resi '+'+'.join(str(j+1) for j in strong), buffer=4.0)
 save(str(root/'zoom.png'))
 cmd.delete('all')
 for field in ('true','musrnet','geometry','coordinate','af3'):
-    cmd.load(str(root/'wt_'+field+'.pdb'),'model')
+    cmd.load(str(root / ('wt_' + field + '.pdb')), 'model')
     cmd.show('cartoon','model')
     paint('model',rows,field)
     cmd.show('spheres',f'model and resi {{mut_pos}} and name CA')
@@ -182,7 +182,7 @@ cmd.delete('ref')
 for field,palette in (('background',BG),('gated_excess',EXCESS),
                       ('musrnet',DISP),('true',DISP),
                       ('abs_error_full',ERROR),('abs_error_global',ERROR)):
-    cmd.load(str(root/'wt_'+field+'.pdb'),'model')
+    cmd.load(str(root / ('wt_' + field + '.pdb')), 'model')
     cmd.show('cartoon','model')
     paint('model',rows,field,palette)
     cmd.set_view(view)
