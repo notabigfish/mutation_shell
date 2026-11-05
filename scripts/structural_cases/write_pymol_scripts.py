@@ -120,19 +120,20 @@ cmd.zoom('mut and resi '+'+'.join(str(j+1) for j in strong), buffer=4.0)
 save(str(root/'zoom.png'))
 cmd.delete('all')
 for field in ('true','musrnet','geometry','coordinate','af3'):
-    cmd.load(str(root / ('wt_' + field + '.pdb')), 'model')
-    cmd.show('cartoon','model')
-    paint('model',rows,field)
-    cmd.show('spheres',f'model and resi {{mut_pos}} and name CA')
-    cmd.set('sphere_scale',.35,'model')
+    cmd.load(str(root / ('wt_' + field + '.pdb')), 'response_obj')
+    cmd.show('cartoon','response_obj')
+    paint('response_obj',rows,field)
+    cmd.show('spheres',f'response_obj and resi {{mut_pos}} and name CA')
+    cmd.set('sphere_scale',.35,'response_obj')
     if field=='coordinate':
         for j in strong:
-            origin=cmd.get_atom_coords(f'model and resi {{j+1}} and name CA')
+            origin=cmd.get_atom_coords(f'response_obj and resi {{j+1}} and name CA')
             delta=[float(rows[j][k]) for k in ('vector_x','vector_y','vector_z')]
             arrow(origin,[origin[k]+delta[k] for k in range(3)],'pred_arrow_'+str(j),TEAL,.08)
     cmd.set_view(view)
     save(str(root/(field+'.png')))
     cmd.delete('all')
+
 '''
 
 
@@ -182,17 +183,18 @@ cmd.delete('ref')
 for field,palette in (('background',BG),('gated_excess',EXCESS),
                       ('musrnet',DISP),('true',DISP),
                       ('abs_error_full',ERROR),('abs_error_global',ERROR)):
-    cmd.load(str(root / ('wt_' + field + '.pdb')), 'model')
-    cmd.show('cartoon','model')
-    paint('model',rows,field,palette)
+    cmd.load(str(root / ('wt_' + field + '.pdb')), 'response_obj')
+    cmd.show('cartoon','response_obj')
+    paint('response_obj',rows,field,palette)
     cmd.set_view(view)
     save(str(root/(field+'.png')))
     if field.startswith('abs_error'):
         mut_pos=next(i for i,row in enumerate(rows,1) if float(row['radii'])<1.e-4)
-        cmd.select('near', f'byres (model within 8 of (model and resi {{mut_pos}} and name CA))')
-        cmd.zoom('near', buffer=4.0)
+        cmd.select('site_neighborhood', f'byres (response_obj within 8 of (response_obj and resi {{mut_pos}} and name CA))')
+        cmd.zoom('site_neighborhood', buffer=4.0)
         save(str(root/(field+'_zoom.png')))
     cmd.delete('all')
+
 '''
 
 
