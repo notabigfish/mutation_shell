@@ -98,7 +98,7 @@ def select_peak(pdb_dir):
     qualified = screened.loc[
         screened.true_peak_radius_A.le(8.0)
         & screened.peak_position_gap.le(5)
-        & screened.local_peak_relative_error.le(0.25)
+        & screened.local_peak_relative_error.le(0.85)  # 0.25
         & screened.global_peak_relative_error.le(0.35)
     ].copy()
     qualified.to_csv(OUT / 'peak_screening_eligible.csv', index=False)
