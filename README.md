@@ -443,3 +443,6 @@ python scripts/evaluate_strict_baselines.py \
   --n-bootstrap 10000 \
   --out-dir outputs/call/mechanism_closure_seed42
 ```
+
+## Paper-related
+### Figure
